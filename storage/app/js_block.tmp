@@ -1,0 +1,183 @@
+// ── Modal: Toàn bộ URL ────────────────────────────────────────────────────────
+const btnAllUrls = document.getElementById('btnAllUrls');
+if (btnAllUrls) {
+    btnAllUrls.addEventListener('click', function () {
+        const snapshotId = this.dataset.snapshot;
+        const tbody      = document.getElementById('allUrlsBody');
+        const countEl    = document.getElementById('allUrlsCount');
+        tbody.innerHTML  = '<tr><td colspan="7" class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-info"></i></td></tr>';
+        countEl.textContent = '';
+        updateUrlSelectedCount();
+        $('#allUrlsModal').modal('show');
+
+        fetch(`/api/landing-pages?snapshot_id=${snapshotId}`)
+            .then(r => r.json())
+            .then(data => {
+                countEl.textContent = `${data.length} URLs`;
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Không có dữ liệu</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.map((p, i) => {
+                    const path = p.target_url.replace(/^https?:\/\/[^\/]+/, '') || '/';
+                    return `<tr>
+                        <td class="text-center"><input type="checkbox" class="chk-url" value="${encodeURIComponent(p.target_url)}"></td>
+                        <td class="text-muted">${i+1}</td>
+                        <td class="text-truncate" style="max-width:320px;" title="${p.target_url}">
+                            <a href="${p.target_url}" target="_blank" rel="noopener" class="text-info">${path}</a>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-xs btn-outline-primary btn-url-kw"
+                                    data-snapshot="${snapshotId}" data-url="${p.target_url}">
+                                ${p.kw_count}
+                            </button>
+                        </td>
+                        <td class="text-center">${p.best_pos ?? '—'}</td>
+                        <td class="text-center">${p.avg_pos ?? '—'}</td>
+                        <td class="text-center">${Number(p.total_volume).toLocaleString('vi-VN')}</td>
+                    </tr>`;
+                }).join('');
+                attachUrlKwHandlers(tbody);
+                tbody.querySelectorAll('.chk-url').forEach(chk =>
+                    chk.addEventListener('change', updateUrlSelectedCount)
+                );
+            })
+            .catch(() => {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center py-3">Lỗi tải dữ liệu</td></tr>';
+            });
+    });
+
+    document.getElementById('urlSearchInput').addEventListener('input', function () {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('#allUrlsBody tr').forEach(tr => {
+            tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+    });
+    document.getElementById('btnCheckAllUrls').addEventListener('click', () => {
+        document.querySelectorAll('#allUrlsBody .chk-url').forEach(c => c.checked = true);
+        updateUrlSelectedCount();
+    });
+    document.getElementById('btnUncheckAllUrls').addEventListener('click', () => {
+        document.querySelectorAll('#allUrlsBody .chk-url').forEach(c => c.checked = false);
+        updateUrlSelectedCount();
+    });
+}
+
+function updateUrlSelectedCount() {
+    const n  = document.querySelectorAll('#allUrlsBody .chk-url:checked').length;
+    const el = document.getElementById('urlSelectedCount');
+    if (el) el.textContent = n > 0 ? `${n} URL đã chọn` : '';
+}
+
+document.getElementById('btnReportFromUrls')?.addEventListener('click', function () {
+    const checked = [...document.querySelectorAll('#allUrlsBody .chk-url:checked')];
+    if (!checked.length) { alert('Vui lòng chọn ít nhất 1 URL.'); return; }
+    openFilteredReportModal('urls', checked.map(c => decodeURIComponent(c.value)), [], `${checked.length} URL đã chọn`);
+});
+
+// ── Modal: Keywords của URL ───────────────────────────────────────────────────
+function updateKwSelectedCount() {
+    const n  = document.querySelectorAll('#urlKwBody .chk-kw:checked').length;
+    const el = document.getElementById('kwSelectedCount');
+    if (el) el.textContent = n > 0 ? `${n} keyword đã chọn` : '';
+}
+document.getElementById('btnCheckAllKw')?.addEventListener('click', () => {
+    document.querySelectorAll('#urlKwBody .chk-kw').forEach(c => c.checked = true);
+    updateKwSelectedCount();
+});
+document.getElementById('btnUncheckAllKw')?.addEventListener('click', () => {
+    document.querySelectorAll('#urlKwBody .chk-kw').forEach(c => c.checked = false);
+    updateKwSelectedCount();
+});
+document.getElementById('btnReportFromKw')?.addEventListener('click', function () {
+    const checked = [...document.querySelectorAll('#urlKwBody .chk-kw:checked')];
+    if (!checked.length) { alert('Vui lòng chọn ít nhất 1 keyword.'); return; }
+    openFilteredReportModal('keywords', [], checked.map(c => parseInt(c.value)), `${checked.length} keyword đã chọn`);
+});
+
+function attachUrlKwHandlers(container) {
+    container.querySelectorAll('.btn-url-kw').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const snapshotId = this.dataset.snapshot;
+            const url        = this.dataset.url;
+            const tbody      = document.getElementById('urlKwBody');
+            const countEl    = document.getElementById('urlKwCount');
+            const label      = document.getElementById('urlKwLabel');
+
+            label.textContent   = url.replace(/^https?:\/\/[^\/]+/, '') || '/';
+            tbody.innerHTML     = '<tr><td colspan="5" class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-primary"></i></td></tr>';
+            countEl.textContent = '';
+            updateKwSelectedCount();
+            $('#urlKeywordsModal').modal('show');
+
+            fetch(`/api/url-keywords?snapshot_id=${snapshotId}&url=${encodeURIComponent(url)}`)
+                .then(r => r.json())
+                .then(data => {
+                    countEl.textContent = `${data.length} keywords`;
+                    if (!data.length) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Không có dữ liệu</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = data.map(kw => {
+                        const pos   = kw.current_position ?? '—';
+                        const badge = kw.current_position <= 3  ? 'success'
+                                    : kw.current_position <= 10 ? 'info'
+                                    : kw.current_position <= 20 ? 'primary'
+                                    : kw.current_position <= 50 ? 'warning' : 'secondary';
+                        const chg   = kw.position_change > 0
+                                    ? `<span class="change-up">▲ +${kw.position_change}</span>`
+                                    : kw.position_change < 0
+                                        ? `<span class="change-down">▼ ${kw.position_change}</span>`
+                                        : '<span class="change-none">—</span>';
+                        const kwId  = kw.keyword_id ?? 0;
+                        return `<tr>
+                            <td class="text-center"><input type="checkbox" class="chk-kw" value="${kwId}" checked></td>
+                            <td>${kw.keyword}</td>
+                            <td class="text-center"><span class="badge badge-${badge} px-2">${pos}</span></td>
+                            <td class="text-center">${chg}</td>
+                            <td class="text-center text-muted">${kw.search_volume > 0 ? Number(kw.search_volume).toLocaleString('vi-VN') : '—'}</td>
+                        </tr>`;
+                    }).join('');
+                    tbody.querySelectorAll('.chk-kw').forEach(chk =>
+                        chk.addEventListener('change', updateKwSelectedCount)
+                    );
+                    updateKwSelectedCount();
+                })
+                .catch(() => {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center py-3">Lỗi tải dữ liệu</td></tr>';
+                });
+        });
+    });
+}
+
+attachUrlKwHandlers(document);
+
+// ── Mở modal cấu hình báo cáo filtered ───────────────────────────────────────
+function openFilteredReportModal(filterType, urls, keywordIds, summary) {
+    document.getElementById('frFilterType').value = filterType;
+    document.getElementById('frFilterSummary').textContent = 'Báo cáo cho: ' + summary;
+
+    const container = document.getElementById('frHiddenInputs');
+    container.innerHTML = '';
+    if (filterType === 'urls') {
+        urls.forEach(u => {
+            const inp = document.createElement('input');
+            inp.type = 'hidden'; inp.name = 'selected_urls[]'; inp.value = u;
+            container.appendChild(inp);
+        });
+    } else {
+        keywordIds.forEach(id => {
+            const inp = document.createElement('input');
+            inp.type = 'hidden'; inp.name = 'selected_keyword_ids[]'; inp.value = id;
+            container.appendChild(inp);
+        });
+    }
+
+    $('#allUrlsModal').modal('hide');
+    $('#urlKeywordsModal').modal('hide');
+    setTimeout(() => $('#filteredReportModal').modal('show'), 350);
+}
+
+document.getElementById('frIncludeComp')?.addEventListener('change', function () {
+    document.getElementById('frCompetitorList').style.display = this.checked ? 'block' : 'none';
+});

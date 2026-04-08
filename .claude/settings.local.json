@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find routes:*)",
+      "Bash(xargs grep:*)",
+      "Bash(wc -l app/**/*.php config/*.php routes/*.php)",
+      "Bash([ -d \"C:/laragon/www\" ])"
+    ]
+  }
+}
