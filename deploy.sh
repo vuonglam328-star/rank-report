@@ -75,19 +75,27 @@ curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin
 # =============================================================================
 echo "[4/9] Installing MySQL 8.0..."
 apt-get install -y -qq mysql-server
+systemctl start mysql
 
-# Secure MySQL & create DB/user
-mysql -u root <<SQL
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
-DELETE FROM mysql.user WHERE User='';
-DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
-DROP DATABASE IF EXISTS test;
-DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
-CREATE DATABASE IF NOT EXISTS ${DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
-GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';
-FLUSH PRIVILEGES;
-SQL
+# Chạy từng lệnh riêng để dễ debug nếu lỗi
+echo "[4/9] Configuring MySQL..."
+
+# Trên Ubuntu 22.04, root dùng auth_socket — kết nối không cần password
+mysql -u root -e "DELETE FROM mysql.user WHERE User='';" 2>/dev/null || true
+mysql -u root -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');" 2>/dev/null || true
+mysql -u root -e "DROP DATABASE IF EXISTS test;" 2>/dev/null || true
+mysql -u root -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';" 2>/dev/null || true
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -e "DROP USER IF EXISTS '${DB_USER}'@'localhost';"
+mysql -u root -e "CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';"
+mysql -u root -e "GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';"
+mysql -u root -e "FLUSH PRIVILEGES;"
+
+# Kiểm tra kết nối bằng user mới trước khi tiếp tục
+if ! mysql -u "${DB_USER}" -p"${DB_PASS}" -e "SELECT 1;" "${DB_NAME}" > /dev/null 2>&1; then
+    echo "ERROR: Không thể kết nối MySQL với user ${DB_USER}. Dừng lại."
+    exit 1
+fi
 
 echo ""
 echo ">>> MySQL DB created: ${DB_NAME}"
