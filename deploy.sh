@@ -74,7 +74,7 @@ curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin
 # 4. Node.js 20 LTS
 # =============================================================================
 echo "[4/10] Installing Node.js 20 LTS..."
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash - -q
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt-get install -y -qq nodejs
 
 # =============================================================================
