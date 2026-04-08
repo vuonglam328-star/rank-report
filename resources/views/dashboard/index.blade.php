@@ -25,7 +25,23 @@
 /* ── Visibility score card ───────────────────────────────── */
 .visibility-card .inner h3 { font-size: 2.6rem; }
 
-/* ── Sticky modal thead ──────────────────────────────────── */
+/* ── Sortable table headers ──────────────────────────────── */
+th.sortable {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+th.sortable:hover { background: rgba(0,0,0,.04); }
+th.sortable .sort-icon {
+    display:inline-block; width:1em; text-align:center;
+    font-style:normal; font-size:.75em; margin-left:2px;
+    color:#adb5bd;
+}
+th.sortable .sort-icon::after        { content:'⇅'; }
+th.sortable.asc  .sort-icon::after   { content:'▲'; color:#007bff; }
+th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
+
+
 #allUrlsModal .modal-body { max-height: 65vh; overflow-y: auto; }
 #allUrlsModal thead th,
 #urlKeywordsModal thead th {
@@ -480,13 +496,13 @@
             <div class="card-body p-0">
                 @if(count($winners))
                 <div style="overflow-x:auto;">
-                <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
+                <table class="table table-sm table-hover mb-0 tbl-sort" style="font-size:.85rem;">
                     <thead class="thead-light">
                         <tr>
-                            <th>Keyword</th>
-                            <th class="text-center" style="width:80px;">Trước</th>
-                            <th class="text-center" style="width:80px;">Sau</th>
-                            <th class="text-center" style="width:90px;">Thay đổi</th>
+                            <th class="sortable" data-type="text">Keyword <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num" style="width:80px;">Trước <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num" style="width:80px;">Sau <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num" style="width:90px;">Thay đổi <span class="sort-icon"></span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -495,8 +511,8 @@
                             <td class="text-truncate" style="max-width:200px;" title="{{ $w['keyword'] ?? '' }}">
                                 {{ $w['keyword'] ?? '—' }}
                             </td>
-                            <td class="text-center text-muted">{{ $w['prev_position'] ?? '—' }}</td>
-                            <td class="text-center">
+                            <td class="text-center text-muted" data-val="{{ $w['previous_position'] ?? 9999 }}">{{ $w['previous_position'] ?? '—' }}</td>
+                            <td class="text-center" data-val="{{ $w['current_position'] ?? 9999 }}">
                                 @php
                                     $pos = $w['current_position'] ?? null;
                                     $badgeColor = $pos <= 3 ? 'success' : ($pos <= 10 ? 'info' : ($pos <= 20 ? 'primary' : ($pos <= 50 ? 'warning' : 'secondary')));
@@ -507,11 +523,11 @@
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
-                            <td class="text-center">
-                                @if(isset($w['change']) && $w['change'] > 0)
-                                    <span class="change-up">▲ +{{ $w['change'] }}</span>
-                                @elseif(isset($w['change']) && $w['change'] < 0)
-                                    <span class="change-down">▼ {{ $w['change'] }}</span>
+                            <td class="text-center" data-val="{{ $w['position_change'] ?? 0 }}">
+                                @if(isset($w['position_change']) && $w['position_change'] > 0)
+                                    <span class="change-up">▲ +{{ $w['position_change'] }}</span>
+                                @elseif(isset($w['position_change']) && $w['position_change'] < 0)
+                                    <span class="change-down">▼ {{ $w['position_change'] }}</span>
                                 @else
                                     <span class="change-none">—</span>
                                 @endif
@@ -543,13 +559,13 @@
             <div class="card-body p-0">
                 @if(count($losers))
                 <div style="overflow-x:auto;">
-                <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
+                <table class="table table-sm table-hover mb-0 tbl-sort" style="font-size:.85rem;">
                     <thead class="thead-light">
                         <tr>
-                            <th>Keyword</th>
-                            <th class="text-center" style="width:80px;">Trước</th>
-                            <th class="text-center" style="width:80px;">Sau</th>
-                            <th class="text-center" style="width:90px;">Thay đổi</th>
+                            <th class="sortable" data-type="text">Keyword <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num" style="width:80px;">Trước <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num" style="width:80px;">Sau <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num" style="width:90px;">Thay đổi <span class="sort-icon"></span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -558,8 +574,8 @@
                             <td class="text-truncate" style="max-width:200px;" title="{{ $l['keyword'] ?? '' }}">
                                 {{ $l['keyword'] ?? '—' }}
                             </td>
-                            <td class="text-center text-muted">{{ $l['prev_position'] ?? '—' }}</td>
-                            <td class="text-center">
+                            <td class="text-center text-muted" data-val="{{ $l['previous_position'] ?? 9999 }}">{{ $l['previous_position'] ?? '—' }}</td>
+                            <td class="text-center" data-val="{{ $l['current_position'] ?? 9999 }}">
                                 @php
                                     $lpos = $l['current_position'] ?? null;
                                     $lBadge = $lpos <= 3 ? 'success' : ($lpos <= 10 ? 'info' : ($lpos <= 20 ? 'primary' : ($lpos <= 50 ? 'warning' : 'secondary')));
@@ -570,11 +586,11 @@
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
-                            <td class="text-center">
-                                @if(isset($l['change']) && $l['change'] > 0)
-                                    <span class="change-up">▲ +{{ $l['change'] }}</span>
-                                @elseif(isset($l['change']) && $l['change'] < 0)
-                                    <span class="change-down">▼ {{ $l['change'] }}</span>
+                            <td class="text-center" data-val="{{ $l['position_change'] ?? 0 }}">
+                                @if(isset($l['position_change']) && $l['position_change'] > 0)
+                                    <span class="change-up">▲ +{{ $l['position_change'] }}</span>
+                                @elseif(isset($l['position_change']) && $l['position_change'] < 0)
+                                    <span class="change-down">▼ {{ $l['position_change'] }}</span>
                                 @else
                                     <span class="change-none">—</span>
                                 @endif
@@ -600,19 +616,6 @@
      PHẦN 4B · TOP 10 KEYWORDS (sortable)
      ════════════════════════════════════════════════════════════════════════════ --}}
 @if(!empty($topKeywords))
-@php
-    $baseParams = array_merge(request()->except(['kw_sort','kw_dir']), []);
-    $sortLink = function(string $col) use ($kwSortBy, $kwSortDir, $baseParams): string {
-        $dir = ($kwSortBy === $col && $kwSortDir === 'asc') ? 'desc' : 'asc';
-        return url()->current() . '?' . http_build_query(array_merge($baseParams, ['kw_sort' => $col, 'kw_dir' => $dir]));
-    };
-    $sortIcon = function(string $col) use ($kwSortBy, $kwSortDir): string {
-        if ($kwSortBy !== $col) return '<i class="fas fa-sort text-muted ml-1" style="opacity:.4;"></i>';
-        return $kwSortDir === 'asc'
-            ? '<i class="fas fa-sort-up text-primary ml-1"></i>'
-            : '<i class="fas fa-sort-down text-primary ml-1"></i>';
-    };
-@endphp
 <div class="card card-outline card-primary shadow-sm mb-4">
     <div class="card-header d-flex align-items-center">
         <h3 class="card-title"><i class="fas fa-key mr-2"></i>Top 10 Keywords</h3>
@@ -621,87 +624,53 @@
         </div>
     </div>
     <div class="card-body p-0" style="overflow-x:auto;">
-        <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
+        <table class="table table-sm table-hover mb-0 tbl-sort" style="font-size:.85rem;">
             <thead class="thead-light">
                 <tr>
-                    <th style="min-width:200px;">Keyword</th>
-                    <th class="text-center" style="white-space:nowrap;cursor:pointer;">
-                        <a href="{{ $sortLink('current_position') }}" class="text-dark text-decoration-none">
-                            Position {!! $sortIcon('current_position') !!}
-                        </a>
-                    </th>
-                    <th class="text-center" style="white-space:nowrap;">Thay đổi</th>
-                    <th class="text-center" style="white-space:nowrap;cursor:pointer;">
-                        <a href="{{ $sortLink('search_volume') }}" class="text-dark text-decoration-none">
-                            Volume {!! $sortIcon('search_volume') !!}
-                        </a>
-                    </th>
-                    <th class="text-center" style="white-space:nowrap;cursor:pointer;">
-                        <a href="{{ $sortLink('organic_traffic') }}" class="text-dark text-decoration-none">
-                            Organic Traffic {!! $sortIcon('organic_traffic') !!}
-                        </a>
-                    </th>
-                    <th class="text-center" style="white-space:nowrap;cursor:pointer;">
-                        <a href="{{ $sortLink('kd') }}" class="text-dark text-decoration-none">
-                            KD {!! $sortIcon('kd') !!}
-                        </a>
-                    </th>
-                    <th style="min-width:160px;">URL</th>
+                    <th class="sortable" data-type="text" style="min-width:200px;">Keyword <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">Position <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">Thay đổi <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">Volume <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">Organic Traffic <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">KD <span class="sort-icon"></span></th>
+                    <th class="sortable" data-type="text" style="min-width:160px;">URL <span class="sort-icon"></span></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($topKeywords as $kw)
                 @php
-                    $pos    = $kw->current_position ?? null;
-                    $badge  = $pos <= 3 ? 'success' : ($pos <= 10 ? 'info' : ($pos <= 20 ? 'primary' : ($pos <= 50 ? 'warning' : 'secondary')));
-                    $chg    = $kw->position_change ?? 0;
+                    $pos     = $kw->current_position ?? null;
+                    $badge   = $pos <= 3 ? 'success' : ($pos <= 10 ? 'info' : ($pos <= 20 ? 'primary' : ($pos <= 50 ? 'warning' : 'secondary')));
+                    $chg     = $kw->position_change ?? 0;
                     $urlPath = $kw->target_url ? preg_replace('#^https?://[^/]+#', '', $kw->target_url) ?: '/' : null;
+                    $kdVal   = ($kw->kd !== null && $kw->kd !== '') ? (int)$kw->kd : null;
                 @endphp
                 <tr>
-                    <td class="text-truncate" style="max-width:220px;" title="{{ $kw->keyword }}">
-                        {{ $kw->keyword }}
+                    <td class="text-truncate" style="max-width:220px;" title="{{ $kw->keyword }}">{{ $kw->keyword }}</td>
+                    <td class="text-center" data-val="{{ $pos ?? 9999 }}">
+                        @if($pos) <span class="badge badge-{{ $badge }} px-2">{{ $pos }}</span>
+                        @else <span class="text-muted">—</span> @endif
                     </td>
-                    <td class="text-center">
-                        @if($pos)
-                            <span class="badge badge-{{ $badge }} px-2">{{ $pos }}</span>
-                        @else
-                            <span class="text-muted">—</span>
-                        @endif
+                    <td class="text-center" data-val="{{ $chg }}">
+                        @if($chg > 0) <span class="change-up">▲ +{{ $chg }}</span>
+                        @elseif($chg < 0) <span class="change-down">▼ {{ $chg }}</span>
+                        @else <span class="change-none">—</span> @endif
                     </td>
-                    <td class="text-center">
-                        @if($chg > 0)
-                            <span class="change-up">▲ +{{ $chg }}</span>
-                        @elseif($chg < 0)
-                            <span class="change-down">▼ {{ $chg }}</span>
-                        @else
-                            <span class="change-none">—</span>
-                        @endif
+                    <td class="text-center text-muted" data-val="{{ $kw->search_volume ?? 0 }}">
+                        {{ ($kw->search_volume ?? 0) > 0 ? number_format($kw->search_volume) : '—' }}
                     </td>
-                    <td class="text-center text-muted">
-                        {{ $kw->search_volume > 0 ? number_format($kw->search_volume) : '—' }}
+                    <td class="text-center text-muted" data-val="{{ $kw->organic_traffic ?? 0 }}">
+                        {{ ($kw->organic_traffic ?? 0) > 0 ? number_format($kw->organic_traffic) : '—' }}
                     </td>
-                    <td class="text-center text-muted">
-                        {{ $kw->organic_traffic > 0 ? number_format($kw->organic_traffic) : '—' }}
+                    <td class="text-center" data-val="{{ $kdVal ?? 999 }}">
+                        @if($kdVal !== null)
+                            <span class="badge badge-{{ $kdVal <= 30 ? 'success' : ($kdVal <= 60 ? 'warning' : 'danger') }}">{{ $kdVal }}</span>
+                        @else <span class="text-muted">—</span> @endif
                     </td>
-                    <td class="text-center">
-                        @if($kw->kd !== null && $kw->kd !== '')
-                            @php $kdVal = (int)$kw->kd; @endphp
-                            <span class="badge badge-{{ $kdVal <= 30 ? 'success' : ($kdVal <= 60 ? 'warning' : 'danger') }}">
-                                {{ $kdVal }}
-                            </span>
-                        @else
-                            <span class="text-muted">—</span>
-                        @endif
-                    </td>
-                    <td class="text-truncate" style="max-width:180px;">
+                    <td class="text-truncate" style="max-width:180px;" data-val="{{ $urlPath ?? '' }}">
                         @if($urlPath)
-                            <a href="{{ $kw->target_url }}" target="_blank" rel="noopener"
-                               class="text-info small" title="{{ $kw->target_url }}">
-                                {{ $urlPath }}
-                            </a>
-                        @else
-                            <span class="text-muted">—</span>
-                        @endif
+                            <a href="{{ $kw->target_url }}" target="_blank" rel="noopener" class="text-info small" title="{{ $kw->target_url }}">{{ $urlPath }}</a>
+                        @else <span class="text-muted">—</span> @endif
                     </td>
                 </tr>
                 @endforeach
@@ -733,23 +702,23 @@
                 {{-- Domain Metrics Table --}}
                 @if(!empty($competitorData['domains']))
                 <div class="table-responsive mb-4">
-                    <table class="table table-sm table-bordered table-hover mb-0" style="font-size:.85rem;">
+                    <table class="table table-sm table-bordered table-hover mb-0 tbl-sort" style="font-size:.85rem;">
                         <thead class="thead-light">
                             <tr>
-                                <th>Domain</th>
-                                <th class="text-center">Total KW</th>
-                                <th class="text-center">Avg Pos</th>
-                                <th class="text-center">Top 3</th>
-                                <th class="text-center">Top 10</th>
-                                <th class="text-center">Top 20</th>
-                                <th class="text-center">Top 50</th>
-                                <th class="text-center">Visibility</th>
+                                <th class="sortable" data-type="text">Domain <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Total KW <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Avg Pos <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Top 3 <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Top 10 <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Top 20 <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Top 50 <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Visibility <span class="sort-icon"></span></th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($competitorData['domains'] as $domData)
                             <tr {{ isset($domData['is_main']) && $domData['is_main'] ? 'class=table-primary font-weight-bold' : '' }}>
-                                <td>
+                                <td data-val="{{ $domData['domain'] ?? '' }}">
                                     @if(isset($domData['is_main']) && $domData['is_main'])
                                         <i class="fas fa-home mr-1 text-primary"></i>
                                     @else
@@ -757,13 +726,13 @@
                                     @endif
                                     {{ $domData['domain'] ?? '—' }}
                                 </td>
-                                <td class="text-center">{{ number_format($domData['total_keywords'] ?? 0) }}</td>
-                                <td class="text-center">{{ $domData['avg_position'] ?? '—' }}</td>
-                                <td class="text-center">{{ number_format($domData['top_3'] ?? 0) }}</td>
-                                <td class="text-center">{{ number_format($domData['top_10'] ?? 0) }}</td>
-                                <td class="text-center">{{ number_format($domData['top_20'] ?? 0) }}</td>
-                                <td class="text-center">{{ number_format($domData['top_50'] ?? 0) }}</td>
-                                <td class="text-center">{{ number_format($domData['visibility_score'] ?? 0, 2) }}%</td>
+                                <td class="text-center" data-val="{{ $domData['total_keywords'] ?? 0 }}">{{ number_format($domData['total_keywords'] ?? 0) }}</td>
+                                <td class="text-center" data-val="{{ $domData['avg_position'] ?? 9999 }}">{{ $domData['avg_position'] ?? '—' }}</td>
+                                <td class="text-center" data-val="{{ $domData['top_3'] ?? 0 }}">{{ number_format($domData['top_3'] ?? 0) }}</td>
+                                <td class="text-center" data-val="{{ $domData['top_10'] ?? 0 }}">{{ number_format($domData['top_10'] ?? 0) }}</td>
+                                <td class="text-center" data-val="{{ $domData['top_20'] ?? 0 }}">{{ number_format($domData['top_20'] ?? 0) }}</td>
+                                <td class="text-center" data-val="{{ $domData['top_50'] ?? 0 }}">{{ number_format($domData['top_50'] ?? 0) }}</td>
+                                <td class="text-center" data-val="{{ $domData['visibility_score'] ?? 0 }}">{{ number_format($domData['visibility_score'] ?? 0, 2) }}%</td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -817,15 +786,15 @@
             </div>
             <div class="card-body p-0">
                 <div style="overflow-x:auto;">
-                <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
+                <table class="table table-sm table-hover mb-0 tbl-sort" style="font-size:.85rem;">
                     <thead class="thead-light">
                         <tr>
-                            <th>#</th>
-                            <th>URL</th>
-                            <th class="text-center">Số Keyword</th>
-                            <th class="text-center">Vị trí tốt nhất</th>
-                            <th class="text-center">Avg Pos</th>
-                            <th class="text-center">Total Volume</th>
+                            <th class="sortable" data-type="num" style="width:40px;"># <span class="sort-icon"></span></th>
+                            <th class="sortable" data-type="text">URL <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num">Số Keyword <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num">Vị trí tốt nhất <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num">Avg Pos <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num">Total Volume <span class="sort-icon"></span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -839,13 +808,13 @@
                             $volume   = $page->total_volume ?? $page['total_volume'] ?? 0;
                         @endphp
                         <tr>
-                            <td class="text-muted">{{ $i + 1 }}</td>
-                            <td class="text-truncate" style="max-width:320px;" title="{{ $pageUrl }}">
+                            <td class="text-muted" data-val="{{ $i + 1 }}">{{ $i + 1 }}</td>
+                            <td class="text-truncate" style="max-width:320px;" title="{{ $pageUrl }}" data-val="{{ $pagePath }}">
                                 <a href="{{ $pageUrl }}" target="_blank" rel="noopener" class="text-info">
                                     {{ $pagePath }}
                                 </a>
                             </td>
-                            <td class="text-center">
+                            <td class="text-center" data-val="{{ $kwCount }}">
                                 <button type="button"
                                         class="btn btn-xs btn-outline-primary btn-url-kw"
                                         data-snapshot="{{ $selectedSnapshot->id }}"
@@ -853,7 +822,7 @@
                                     {{ $kwCount }}
                                 </button>
                             </td>
-                            <td class="text-center">
+                            <td class="text-center" data-val="{{ $bestPos ?? 9999 }}">
                                 @if($bestPos)
                                     @php $bBadge = $bestPos <= 3 ? 'success' : ($bestPos <= 10 ? 'info' : ($bestPos <= 20 ? 'primary' : ($bestPos <= 50 ? 'warning' : 'secondary'))); @endphp
                                     <span class="badge badge-{{ $bBadge }}">{{ $bestPos }}</span>
@@ -861,8 +830,8 @@
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
-                            <td class="text-center text-muted">{{ $avgPos ?? '—' }}</td>
-                            <td class="text-center text-muted">{{ number_format($volume) }}</td>
+                            <td class="text-center text-muted" data-val="{{ $avgPos ?? 9999 }}">{{ $avgPos ?? '—' }}</td>
+                            <td class="text-center text-muted" data-val="{{ $volume }}">{{ number_format($volume) }}</td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -1108,6 +1077,49 @@
      SCRIPTS
      ════════════════════════════════════════════════════════════════════════════ --}}
 @push('scripts')
+{{-- ── Table Sort (dùng chung cho tất cả .tbl-sort) ────────────────────────── --}}
+<script>
+(function () {
+    function getVal(td, type) {
+        const v = td.dataset.val;
+        if (v !== undefined) return type === 'num' ? parseFloat(v) : v.toLowerCase();
+        const t = td.textContent.replace(/[▲▼+,\s%]/g, '').trim();
+        return type === 'num' ? (parseFloat(t) || 0) : t.toLowerCase();
+    }
+
+    document.querySelectorAll('table.tbl-sort').forEach(table => {
+        const ths = table.querySelectorAll('thead th.sortable');
+        ths.forEach((th, colIdx) => {
+            th.addEventListener('click', () => {
+                const type    = th.dataset.type || 'text';
+                const wasAsc  = th.classList.contains('asc');
+                const sortDir = wasAsc ? 'desc' : 'asc';
+
+                // Reset tất cả headers
+                ths.forEach(h => h.classList.remove('asc', 'desc'));
+                th.classList.add(sortDir);
+
+                const tbody = table.querySelector('tbody');
+                const rows  = [...tbody.querySelectorAll('tr')];
+
+                rows.sort((a, b) => {
+                    const tdA = a.querySelectorAll('td')[colIdx];
+                    const tdB = b.querySelectorAll('td')[colIdx];
+                    if (!tdA || !tdB) return 0;
+                    const vA = getVal(tdA, type);
+                    const vB = getVal(tdB, type);
+                    if (vA < vB) return sortDir === 'asc' ? -1 : 1;
+                    if (vA > vB) return sortDir === 'asc' ? 1 : -1;
+                    return 0;
+                });
+
+                rows.forEach(r => tbody.appendChild(r));
+            });
+        });
+    });
+})();
+</script>
+
 <script>
 // ════════════════════════════════════════════════════════════════════════════════
 // Script 1 · Filter auto-submit logic

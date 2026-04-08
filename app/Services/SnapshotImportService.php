@@ -217,6 +217,8 @@ class SnapshotImportService
                     'previous_position' => $prevPos,
                     'position_change'   => $posChange,
                     'search_volume'     => $row['search_volume'] ?? 0,
+                    'kd'                => isset($row['kd']) && is_numeric($row['kd']) ? (int)$row['kd'] : null,
+                    'organic_traffic'   => isset($row['organic_traffic']) && is_numeric($row['organic_traffic']) ? (int)$row['organic_traffic'] : 0,
                     'target_url'        => isset($row['target_url']) ? substr($row['target_url'], 0, 1000) : null,
                     'location'          => $row['location'] ?? null,
                     'device'            => null,

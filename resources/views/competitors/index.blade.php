@@ -5,6 +5,21 @@
     <li class="breadcrumb-item active">Competitors</li>
 @endsection
 
+@push('styles')
+<style>
+th.sortable { cursor:pointer; user-select:none; white-space:nowrap; }
+th.sortable:hover { background:rgba(0,0,0,.04); }
+th.sortable .sort-icon {
+    display:inline-block; width:1em; text-align:center;
+    font-style:normal; font-size:.75em; margin-left:2px;
+    color:#adb5bd;
+}
+th.sortable .sort-icon::after        { content:'⇅'; }
+th.sortable.asc  .sort-icon::after   { content:'▲'; color:#007bff; }
+th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
+</style>
+@endpush
+
 @section('content')
 <form method="GET" action="{{ route('competitors.index') }}">
 <div class="card card-outline card-warning shadow-sm mb-3">
@@ -84,28 +99,28 @@
         <h3 class="card-title"><i class="fas fa-table mr-2"></i>Bảng so sánh — {{ $selectedProject->domain_clean }}</h3>
     </div>
     <div class="card-body p-0">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover mb-0 tbl-sort">
             <thead class="thead-light">
                 <tr>
-                    <th>Domain</th>
-                    <th class="text-center">Total KWs</th>
-                    <th class="text-center">Visibility Score</th>
+                    <th class="sortable" data-type="text">Domain <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">Total KWs <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">Visibility Score <span class="sort-icon"></span></th>
                     <th class="text-center">Share of Voice</th>
-                    <th class="text-center">Overlap</th>
-                    <th class="text-center">Wins vs Main</th>
-                    <th class="text-center">Snapshot</th>
+                    <th class="sortable text-center" data-type="num">Overlap <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">Wins vs Main <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="text">Snapshot <span class="sort-icon"></span></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($analysis['domain_metrics'] as $m)
                 <tr class="{{ $m['is_main'] ? 'table-primary font-weight-bold' : '' }}">
-                    <td>
+                    <td data-val="{{ $m['domain'] }}">
                         @if($m['is_main'])<i class="fas fa-home mr-1 text-primary"></i>@endif
                         {{ $m['domain'] }}
                         @if($m['is_main'])<span class="badge badge-primary ml-1">Main</span>@endif
                     </td>
-                    <td class="text-center">{{ number_format($m['total_keywords']) }}</td>
-                    <td class="text-center">{{ number_format($m['visibility_score']) }}</td>
+                    <td class="text-center" data-val="{{ $m['total_keywords'] }}">{{ number_format($m['total_keywords']) }}</td>
+                    <td class="text-center" data-val="{{ $m['visibility_score'] }}">{{ number_format($m['visibility_score']) }}</td>
                     <td class="text-center">
                         <div class="progress" style="height:18px;">
                             <div class="progress-bar bg-{{ $m['is_main'] ? 'primary' : 'warning' }}"
@@ -114,15 +129,15 @@
                             </div>
                         </div>
                     </td>
-                    <td class="text-center">{{ number_format($m['overlap_with_main']) }}</td>
-                    <td class="text-center">
+                    <td class="text-center" data-val="{{ $m['overlap_with_main'] }}">{{ number_format($m['overlap_with_main']) }}</td>
+                    <td class="text-center" data-val="{{ $m['is_main'] ? -1 : $m['wins_vs_main'] }}">
                         @if(!$m['is_main'])
                             <span class="{{ $m['wins_vs_main'] > 0 ? 'text-danger' : 'text-muted' }}">
                                 {{ number_format($m['wins_vs_main']) }}
                             </span>
                         @else —@endif
                     </td>
-                    <td class="text-center text-muted small">{{ $m['snapshot_date'] }}</td>
+                    <td class="text-center text-muted small" data-val="{{ $m['snapshot_date'] }}">{{ $m['snapshot_date'] }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -168,22 +183,22 @@
             <span class="badge badge-secondary ml-1">{{ count($detail['keywords']) }} keywords overlap</span>
         </h5>
         <div style="max-height:250px; overflow-y:auto; margin-bottom:20px;">
-        <table class="table table-sm table-bordered mb-0" style="font-size:.82rem;">
+        <table class="table table-sm table-bordered mb-0 tbl-sort" style="font-size:.82rem;">
             <thead class="thead-light">
                 <tr>
-                    <th>Keyword</th>
-                    <th class="text-center">Main</th>
-                    <th class="text-center">{{ $detail['domain'] }}</th>
-                    <th class="text-center">Winner</th>
+                    <th class="sortable" data-type="text">Keyword <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">Main <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">{{ $detail['domain'] }} <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="text">Winner <span class="sort-icon"></span></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($detail['keywords'] as $kw)
                 <tr class="{{ $kw['winner'] === 'competitor' ? 'table-danger' : 'table-success' }}">
-                    <td>{{ $kw['keyword'] }}</td>
-                    <td class="text-center">{{ $kw['main_pos'] ?? '—' }}</td>
-                    <td class="text-center">{{ $kw['comp_pos'] ?? '—' }}</td>
-                    <td class="text-center">
+                    <td data-val="{{ $kw['keyword'] }}">{{ $kw['keyword'] }}</td>
+                    <td class="text-center" data-val="{{ $kw['main_pos'] ?? 9999 }}">{{ $kw['main_pos'] ?? '—' }}</td>
+                    <td class="text-center" data-val="{{ $kw['comp_pos'] ?? 9999 }}">{{ $kw['comp_pos'] ?? '—' }}</td>
+                    <td class="text-center" data-val="{{ $kw['winner'] }}">
                         <span class="badge badge-{{ $kw['winner'] === 'main' ? 'success' : 'danger' }}">
                             {{ $kw['winner'] === 'main' ? 'Main ✓' : $detail['domain'] }}
                         </span>
@@ -202,6 +217,34 @@
 @endsection
 
 @push('scripts')
+<script>
+// ── Table Sort ────────────────────────────────────────────────────────────────
+(function () {
+    function getVal(td, type) {
+        const v = td.dataset.val;
+        if (v !== undefined) return type === 'num' ? parseFloat(v) : v.toLowerCase();
+        const t = td.textContent.replace(/[▲▼+,\s%]/g, '').trim();
+        return type === 'num' ? (parseFloat(t) || 0) : t.toLowerCase();
+    }
+    document.querySelectorAll('table.tbl-sort').forEach(table => {
+        table.querySelectorAll('thead th.sortable').forEach((th, colIdx) => {
+            th.addEventListener('click', () => {
+                const type = th.dataset.type || 'text';
+                const dir  = th.classList.contains('asc') ? 'desc' : 'asc';
+                table.querySelectorAll('thead th.sortable').forEach(h => h.classList.remove('asc','desc'));
+                th.classList.add(dir);
+                const tbody = table.querySelector('tbody');
+                [...tbody.querySelectorAll('tr')].sort((a, b) => {
+                    const vA = getVal(a.querySelectorAll('td')[colIdx], type);
+                    const vB = getVal(b.querySelectorAll('td')[colIdx], type);
+                    return (vA < vB ? -1 : vA > vB ? 1 : 0) * (dir === 'asc' ? 1 : -1);
+                }).forEach(r => tbody.appendChild(r));
+            });
+        });
+    });
+})();
+</script>
+
 @if($analysis && !empty($analysis['charts']))
 <script>
 const compCharts = @json($analysis['charts']);

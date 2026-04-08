@@ -10,6 +10,16 @@
 .change-up   { color: #28a745; font-weight: 600; }
 .change-down { color: #dc3545; font-weight: 600; }
 .change-none { color: #6c757d; }
+th.sortable { cursor:pointer; user-select:none; white-space:nowrap; }
+th.sortable:hover { background:rgba(0,0,0,.04); }
+th.sortable .sort-icon {
+    display:inline-block; width:1em; text-align:center;
+    font-style:normal; font-size:.75em; margin-left:2px;
+    color:#adb5bd;
+}
+th.sortable .sort-icon::after        { content:'⇅'; }
+th.sortable.asc  .sort-icon::after   { content:'▲'; color:#007bff; }
+th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
 </style>
 @endpush
 
@@ -90,31 +100,36 @@
             Keywords — {{ $selectedProject->name }}
             <span class="badge badge-secondary ml-2">{{ $keywords->total() }} kết quả</span>
         </h3>
-        <small class="text-muted">Snapshot: {{ $selectedSnapshot->report_date->format('d/m/Y') }}</small>
+        <small class="text-muted">
+            Snapshot: {{ $selectedSnapshot->report_date->format('d/m/Y') }}
+            @if($keywords->hasPages())
+                &nbsp;·&nbsp; <span class="text-warning">Sort áp dụng trong trang hiện tại</span>
+            @endif
+        </small>
     </div>
     <div class="card-body p-0" style="overflow-x:auto;">
-        <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
+        <table class="table table-sm table-hover mb-0 tbl-sort" style="font-size:.85rem;">
             <thead class="thead-light">
                 <tr>
-                    <th>Keyword</th>
-                    <th class="text-center" style="width:80px;">Vị trí</th>
-                    <th class="text-center" style="width:90px;">Thay đổi</th>
-                    <th class="text-center" style="width:90px;">Volume</th>
-                    <th>Landing Page</th>
-                    <th class="text-center" style="width:70px;">Brand</th>
+                    <th class="sortable" data-type="text">Keyword <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num" style="width:80px;">Vị trí <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num" style="width:90px;">Thay đổi <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num" style="width:90px;">Volume <span class="sort-icon"></span></th>
+                    <th class="sortable" data-type="text">Landing Page <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="text" style="width:70px;">Brand <span class="sort-icon"></span></th>
                     <th class="text-center" style="width:70px;">Timeline</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($keywords as $row)
                 <tr>
-                    <td>
+                    <td data-val="{{ $row->keyword }}">
                         <span title="{{ $row->keyword }}">{{ Str::limit($row->keyword, 60) }}</span>
                         @if($row->tag)
                             <span class="badge badge-light border ml-1">{{ $row->tag }}</span>
                         @endif
                     </td>
-                    <td class="text-center">
+                    <td class="text-center" data-val="{{ $row->current_position ?? 9999 }}">
                         @if($row->current_position)
                             @php
                                 $badge = $row->current_position <= 3 ? 'success' : ($row->current_position <= 10 ? 'info' : ($row->current_position <= 20 ? 'primary' : ($row->current_position <= 50 ? 'warning' : 'secondary')));
@@ -124,7 +139,7 @@
                             <span class="badge badge-light text-muted">—</span>
                         @endif
                     </td>
-                    <td class="text-center">
+                    <td class="text-center" data-val="{{ $row->position_change ?? 0 }}">
                         @if($row->position_change > 0)
                             <span class="change-up">▲ +{{ $row->position_change }}</span>
                         @elseif($row->position_change < 0)
@@ -133,10 +148,11 @@
                             <span class="change-none">—</span>
                         @endif
                     </td>
-                    <td class="text-center text-muted">
+                    <td class="text-center text-muted" data-val="{{ $row->search_volume ?? 0 }}">
                         {{ $row->search_volume > 0 ? number_format($row->search_volume) : '—' }}
                     </td>
-                    <td class="text-truncate" style="max-width:220px;" title="{{ $row->target_url }}">
+                    <td class="text-truncate" style="max-width:220px;" title="{{ $row->target_url }}"
+                        data-val="{{ $row->target_url ? preg_replace('/^https?:\/\/[^\/]+/', '', $row->target_url) : '' }}">
                         @if($row->target_url)
                             <a href="{{ $row->target_url }}" target="_blank" rel="noopener" class="text-info small">
                                 {{ preg_replace('/^https?:\/\/[^\/]+/', '', $row->target_url) ?: '/' }}
@@ -145,7 +161,7 @@
                             <span class="text-muted">—</span>
                         @endif
                     </td>
-                    <td class="text-center">
+                    <td class="text-center" data-val="{{ $row->brand_flag ? '1' : '0' }}">
                         @if($row->brand_flag)
                             <span class="badge badge-warning">B</span>
                         @else
@@ -173,7 +189,7 @@
     </div>
     @if($keywords->hasPages())
     <div class="card-footer">
-        {{ $keywords->links() }}
+        {{ $keywords->links('pagination::bootstrap-4') }}
     </div>
     @endif
 </div>
@@ -200,6 +216,32 @@
 
 @push('scripts')
 <script>
+// ── Table Sort ────────────────────────────────────────────────────────────────
+(function () {
+    function getVal(td, type) {
+        const v = td.dataset.val;
+        if (v !== undefined) return type === 'num' ? parseFloat(v) : v.toLowerCase();
+        const t = td.textContent.replace(/[▲▼+,\s%]/g, '').trim();
+        return type === 'num' ? (parseFloat(t) || 0) : t.toLowerCase();
+    }
+    document.querySelectorAll('table.tbl-sort').forEach(table => {
+        table.querySelectorAll('thead th.sortable').forEach((th, colIdx) => {
+            th.addEventListener('click', () => {
+                const type   = th.dataset.type || 'text';
+                const dir    = th.classList.contains('asc') ? 'desc' : 'asc';
+                table.querySelectorAll('thead th.sortable').forEach(h => h.classList.remove('asc','desc'));
+                th.classList.add(dir);
+                const tbody = table.querySelector('tbody');
+                [...tbody.querySelectorAll('tr')].sort((a, b) => {
+                    const vA = getVal(a.querySelectorAll('td')[colIdx], type);
+                    const vB = getVal(b.querySelectorAll('td')[colIdx], type);
+                    return (vA < vB ? -1 : vA > vB ? 1 : 0) * (dir === 'asc' ? 1 : -1);
+                }).forEach(r => tbody.appendChild(r));
+            });
+        });
+    });
+})();
+
 // ── Auto-submit khi đổi Project: load snapshots → submit ─────────────────────
 document.getElementById('projSelect').addEventListener('change', function () {
     const projectId = this.value;
