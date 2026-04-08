@@ -28,7 +28,7 @@ echo ""
 # =============================================================================
 # 1. System update
 # =============================================================================
-echo "[1/10] Updating system..."
+echo "[1/9] Updating system..."
 apt-get update -qq
 apt-get upgrade -y -qq
 apt-get install -y -qq curl wget git unzip software-properties-common ufw
@@ -36,7 +36,7 @@ apt-get install -y -qq curl wget git unzip software-properties-common ufw
 # =============================================================================
 # 2. PHP 8.2 + extensions
 # =============================================================================
-echo "[2/10] Installing PHP $PHP_VER..."
+echo "[2/9] Installing PHP $PHP_VER..."
 add-apt-repository ppa:ondrej/php -y
 apt-get update -qq
 apt-get install -y -qq \
@@ -67,20 +67,13 @@ systemctl restart php${PHP_VER}-fpm
 # =============================================================================
 # 3. Composer
 # =============================================================================
-echo "[3/10] Installing Composer..."
+echo "[3/9] Installing Composer..."
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --quiet
 
 # =============================================================================
-# 4. Node.js 20 LTS
+# 4. MySQL 8.0
 # =============================================================================
-echo "[4/10] Installing Node.js 20 LTS..."
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt-get install -y -qq nodejs
-
-# =============================================================================
-# 5. MySQL 8.0
-# =============================================================================
-echo "[5/10] Installing MySQL 8.0..."
+echo "[4/9] Installing MySQL 8.0..."
 apt-get install -y -qq mysql-server
 
 # Secure MySQL & create DB/user
@@ -107,7 +100,7 @@ echo "${DB_PASS}" > /root/.rankreport_db_pass
 # =============================================================================
 # 6. Nginx
 # =============================================================================
-echo "[6/10] Installing Nginx..."
+echo "[5/9] Installing Nginx..."
 apt-get install -y -qq nginx
 
 # Remove default site
@@ -183,7 +176,7 @@ systemctl reload nginx
 # =============================================================================
 # 7. Clone & Setup Application
 # =============================================================================
-echo "[7/10] Cloning application..."
+echo "[6/9] Cloning application..."
 mkdir -p /var/www
 git clone ${REPO} ${APP_DIR}
 cd ${APP_DIR}
@@ -199,9 +192,7 @@ mkdir -p bootstrap/cache
 # Install PHP dependencies (no dev)
 composer install --no-dev --optimize-autoloader --no-interaction
 
-# Install & build frontend assets
-npm install
-npm run build
+# (No Vite build needed — assets are pre-built in public/assets/)
 
 # Generate app key & set up .env
 DB_PASS_SAVED=$(cat /root/.rankreport_db_pass)
@@ -268,7 +259,7 @@ chmod 640 ${APP_DIR}/.env
 # =============================================================================
 # 8. Queue Worker (Supervisor)
 # =============================================================================
-echo "[8/10] Setting up Queue Worker..."
+echo "[7/9] Setting up Queue Worker..."
 apt-get install -y -qq supervisor
 
 cat > /etc/supervisor/conf.d/rank-report-worker.conf <<SUPERVISOR
@@ -293,13 +284,13 @@ supervisorctl update
 # =============================================================================
 # 9. Cron Job (Laravel Scheduler)
 # =============================================================================
-echo "[9/10] Setting up Scheduler..."
+echo "[8/9] Setting up Scheduler..."
 (crontab -l 2>/dev/null; echo "* * * * * cd /var/www/rank-report && php artisan schedule:run >> /dev/null 2>&1") | crontab -
 
 # =============================================================================
 # 10. SSL Certificate (Let's Encrypt)
 # =============================================================================
-echo "[10/10] Installing SSL certificate..."
+echo "[9/9] Installing SSL certificate..."
 apt-get install -y -qq certbot python3-certbot-nginx
 
 certbot --nginx \
