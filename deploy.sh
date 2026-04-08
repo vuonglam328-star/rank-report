@@ -37,7 +37,7 @@ apt-get install -y -qq curl wget git unzip software-properties-common ufw
 # 2. PHP 8.2 + extensions
 # =============================================================================
 echo "[2/10] Installing PHP $PHP_VER..."
-add-apt-repository ppa:ondrej/php -y -q
+add-apt-repository ppa:ondrej/php -y
 apt-get update -qq
 apt-get install -y -qq \
     php${PHP_VER}-fpm \
