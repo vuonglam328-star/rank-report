@@ -198,7 +198,7 @@ mkdir -p storage/logs
 mkdir -p bootstrap/cache
 
 # Install PHP dependencies (no dev)
-composer install --no-dev --optimize-autoloader --no-interaction
+COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-interaction
 
 # (No Vite build needed — assets are pre-built in public/assets/)
 
