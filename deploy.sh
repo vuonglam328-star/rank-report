@@ -197,10 +197,10 @@ mkdir -p storage/logs
 mkdir -p bootstrap/cache
 
 # Install PHP dependencies (no dev)
-composer install --no-dev --optimize-autoloader --no-interaction --quiet
+composer install --no-dev --optimize-autoloader --no-interaction
 
 # Install & build frontend assets
-npm ci --silent
+npm install
 npm run build
 
 # Generate app key & set up .env
