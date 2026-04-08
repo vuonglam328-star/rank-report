@@ -296,6 +296,13 @@ echo "[8/9] Setting up Scheduler..."
 (crontab -l 2>/dev/null; echo "* * * * * cd /var/www/rank-report && php artisan schedule:run >> /dev/null 2>&1") | crontab -
 
 # =============================================================================
+# Firewall — mở port TRƯỚC khi certbot chạy
+# =============================================================================
+ufw allow OpenSSH
+ufw allow 'Nginx Full'
+ufw --force enable
+
+# =============================================================================
 # 10. SSL Certificate (Let's Encrypt)
 # =============================================================================
 echo "[9/9] Installing SSL certificate..."
@@ -310,13 +317,6 @@ certbot --nginx \
 
 # Auto-renew cron
 (crontab -l 2>/dev/null; echo "0 3 * * * certbot renew --quiet --post-hook 'systemctl reload nginx'") | crontab -
-
-# =============================================================================
-# 11. Firewall
-# =============================================================================
-ufw allow OpenSSH
-ufw allow 'Nginx Full'
-ufw --force enable
 
 # =============================================================================
 # Cleanup
