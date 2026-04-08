@@ -231,8 +231,35 @@ class KpiCalculatorService
     }
 
     /**
-     * Get top landing pages by keyword count in Top 10.
+     * Get top keywords by position, with sortable fields.
      */
+    public function getTopKeywords(Snapshot $snapshot, int $limit = 10, string $sortBy = 'current_position', string $sortDir = 'asc'): array
+    {
+        $allowedSort = ['current_position', 'search_volume', 'organic_traffic', 'kd'];
+        $allowedDir  = ['asc', 'desc'];
+        $sortBy  = in_array($sortBy, $allowedSort) ? $sortBy : 'current_position';
+        $sortDir = in_array($sortDir, $allowedDir) ? $sortDir : 'asc';
+
+        return DB::table('keyword_rankings as kr')
+            ->join('keywords as k', 'kr.keyword_id', '=', 'k.id')
+            ->where('kr.snapshot_id', $snapshot->id)
+            ->whereNotNull('kr.current_position')
+            ->orderBy("kr.{$sortBy}", $sortDir)
+            ->limit($limit)
+            ->select([
+                'k.keyword',
+                'kr.current_position',
+                'kr.position_change',
+                'kr.search_volume',
+                'kr.organic_traffic',
+                'kr.kd',
+                'kr.target_url',
+            ])
+            ->get()
+            ->toArray();
+    }
+
+
     public function getTopLandingPages(Snapshot $snapshot, int $limit = 10): array
     {
         return DB::table('keyword_rankings')

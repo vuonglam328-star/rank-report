@@ -75,6 +75,10 @@ class DashboardController extends Controller
         $winners         = [];
         $losers          = [];
         $landingPages    = [];
+        $topKeywords     = [];
+
+        $kwSortBy  = $request->input('kw_sort', 'current_position');
+        $kwSortDir = $request->input('kw_dir', 'asc');
 
         if ($selectedSnapshot) {
             $kpis     = $this->kpiService->calculate($selectedSnapshot);
@@ -83,6 +87,7 @@ class DashboardController extends Controller
             $winners  = $this->kpiService->getTopWinners($selectedSnapshot);
             $losers   = $this->kpiService->getTopLosers($selectedSnapshot);
             $landingPages = $this->kpiService->getTopLandingPages($selectedSnapshot);
+            $topKeywords  = $this->kpiService->getTopKeywords($selectedSnapshot, 10, $kwSortBy, $kwSortDir);
 
             if ($selectedProject) {
                 $timelineData = $this->timelineService->buildProjectTimeline(
@@ -105,7 +110,8 @@ class DashboardController extends Controller
             'availableCompetitors', 'selectedCompetitorIds',
             'dateRange', 'dateFrom', 'dateTo',
             'kpis', 'prevKpis', 'timelineData', 'competitorData',
-            'winners', 'losers', 'landingPages'
+            'winners', 'losers', 'landingPages', 'topKeywords',
+            'kwSortBy', 'kwSortDir'
         ));
     }
 

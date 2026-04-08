@@ -597,6 +597,121 @@
 </div>{{-- /winners losers --}}
 
 {{-- ════════════════════════════════════════════════════════════════════════════
+     PHẦN 4B · TOP 10 KEYWORDS (sortable)
+     ════════════════════════════════════════════════════════════════════════════ --}}
+@if(!empty($topKeywords))
+@php
+    $baseParams = array_merge(request()->except(['kw_sort','kw_dir']), []);
+    $sortLink = function(string $col) use ($kwSortBy, $kwSortDir, $baseParams): string {
+        $dir = ($kwSortBy === $col && $kwSortDir === 'asc') ? 'desc' : 'asc';
+        return url()->current() . '?' . http_build_query(array_merge($baseParams, ['kw_sort' => $col, 'kw_dir' => $dir]));
+    };
+    $sortIcon = function(string $col) use ($kwSortBy, $kwSortDir): string {
+        if ($kwSortBy !== $col) return '<i class="fas fa-sort text-muted ml-1" style="opacity:.4;"></i>';
+        return $kwSortDir === 'asc'
+            ? '<i class="fas fa-sort-up text-primary ml-1"></i>'
+            : '<i class="fas fa-sort-down text-primary ml-1"></i>';
+    };
+@endphp
+<div class="card card-outline card-primary shadow-sm mb-4">
+    <div class="card-header d-flex align-items-center">
+        <h3 class="card-title"><i class="fas fa-key mr-2"></i>Top 10 Keywords</h3>
+        <div class="card-tools ml-auto">
+            <small class="text-muted">Click tiêu đề cột để sắp xếp</small>
+        </div>
+    </div>
+    <div class="card-body p-0" style="overflow-x:auto;">
+        <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
+            <thead class="thead-light">
+                <tr>
+                    <th style="min-width:200px;">Keyword</th>
+                    <th class="text-center" style="white-space:nowrap;cursor:pointer;">
+                        <a href="{{ $sortLink('current_position') }}" class="text-dark text-decoration-none">
+                            Position {!! $sortIcon('current_position') !!}
+                        </a>
+                    </th>
+                    <th class="text-center" style="white-space:nowrap;">Thay đổi</th>
+                    <th class="text-center" style="white-space:nowrap;cursor:pointer;">
+                        <a href="{{ $sortLink('search_volume') }}" class="text-dark text-decoration-none">
+                            Volume {!! $sortIcon('search_volume') !!}
+                        </a>
+                    </th>
+                    <th class="text-center" style="white-space:nowrap;cursor:pointer;">
+                        <a href="{{ $sortLink('organic_traffic') }}" class="text-dark text-decoration-none">
+                            Organic Traffic {!! $sortIcon('organic_traffic') !!}
+                        </a>
+                    </th>
+                    <th class="text-center" style="white-space:nowrap;cursor:pointer;">
+                        <a href="{{ $sortLink('kd') }}" class="text-dark text-decoration-none">
+                            KD {!! $sortIcon('kd') !!}
+                        </a>
+                    </th>
+                    <th style="min-width:160px;">URL</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($topKeywords as $kw)
+                @php
+                    $pos    = $kw->current_position ?? null;
+                    $badge  = $pos <= 3 ? 'success' : ($pos <= 10 ? 'info' : ($pos <= 20 ? 'primary' : ($pos <= 50 ? 'warning' : 'secondary')));
+                    $chg    = $kw->position_change ?? 0;
+                    $urlPath = $kw->target_url ? preg_replace('#^https?://[^/]+#', '', $kw->target_url) ?: '/' : null;
+                @endphp
+                <tr>
+                    <td class="text-truncate" style="max-width:220px;" title="{{ $kw->keyword }}">
+                        {{ $kw->keyword }}
+                    </td>
+                    <td class="text-center">
+                        @if($pos)
+                            <span class="badge badge-{{ $badge }} px-2">{{ $pos }}</span>
+                        @else
+                            <span class="text-muted">—</span>
+                        @endif
+                    </td>
+                    <td class="text-center">
+                        @if($chg > 0)
+                            <span class="change-up">▲ +{{ $chg }}</span>
+                        @elseif($chg < 0)
+                            <span class="change-down">▼ {{ $chg }}</span>
+                        @else
+                            <span class="change-none">—</span>
+                        @endif
+                    </td>
+                    <td class="text-center text-muted">
+                        {{ $kw->search_volume > 0 ? number_format($kw->search_volume) : '—' }}
+                    </td>
+                    <td class="text-center text-muted">
+                        {{ $kw->organic_traffic > 0 ? number_format($kw->organic_traffic) : '—' }}
+                    </td>
+                    <td class="text-center">
+                        @if($kw->kd !== null && $kw->kd !== '')
+                            @php $kdVal = (int)$kw->kd; @endphp
+                            <span class="badge badge-{{ $kdVal <= 30 ? 'success' : ($kdVal <= 60 ? 'warning' : 'danger') }}">
+                                {{ $kdVal }}
+                            </span>
+                        @else
+                            <span class="text-muted">—</span>
+                        @endif
+                    </td>
+                    <td class="text-truncate" style="max-width:180px;">
+                        @if($urlPath)
+                            <a href="{{ $kw->target_url }}" target="_blank" rel="noopener"
+                               class="text-info small" title="{{ $kw->target_url }}">
+                                {{ $urlPath }}
+                            </a>
+                        @else
+                            <span class="text-muted">—</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
+
+{{-- ════════════════════════════════════════════════════════════════════════════
      PHẦN 5 · COMPETITOR COMPARISON
      ════════════════════════════════════════════════════════════════════════════ --}}
 @if($competitorData)
