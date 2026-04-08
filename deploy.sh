@@ -205,7 +205,9 @@ npm run build
 
 # Generate app key & set up .env
 DB_PASS_SAVED=$(cat /root/.rankreport_db_pass)
-APP_KEY=$(php artisan key:generate --show --no-interaction)
+
+# Generate key without needing .env (pure PHP)
+APP_KEY="base64:$(php -r 'echo base64_encode(random_bytes(32));')"
 
 cat > .env <<ENV
 APP_NAME="RankReport Pro"
@@ -247,14 +249,7 @@ CSV_MAX_SIZE_MB=20
 REPORTS_DISK=local
 ENV
 
-# Set permissions
-chown -R www-data:www-data ${APP_DIR}
-chmod -R 755 ${APP_DIR}
-chmod -R 775 ${APP_DIR}/storage
-chmod -R 775 ${APP_DIR}/bootstrap/cache
-chmod 640 ${APP_DIR}/.env
-
-# Run migrations
+# Run migrations TRƯỚC khi chown (vẫn đang là root)
 php artisan migrate --force --no-interaction
 
 # Optimize for production
@@ -262,6 +257,13 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan storage:link
+
+# Set permissions SAU khi artisan chạy xong
+chown -R www-data:www-data ${APP_DIR}
+chmod -R 755 ${APP_DIR}
+chmod -R 775 ${APP_DIR}/storage
+chmod -R 775 ${APP_DIR}/bootstrap/cache
+chmod 640 ${APP_DIR}/.env
 
 # =============================================================================
 # 8. Queue Worker (Supervisor)
@@ -292,7 +294,7 @@ supervisorctl update
 # 9. Cron Job (Laravel Scheduler)
 # =============================================================================
 echo "[9/10] Setting up Scheduler..."
-(crontab -l 2>/dev/null; echo "* * * * * www-data php /var/www/rank-report/artisan schedule:run >> /dev/null 2>&1") | crontab -
+(crontab -l 2>/dev/null; echo "* * * * * cd /var/www/rank-report && php artisan schedule:run >> /dev/null 2>&1") | crontab -
 
 # =============================================================================
 # 10. SSL Certificate (Let's Encrypt)
