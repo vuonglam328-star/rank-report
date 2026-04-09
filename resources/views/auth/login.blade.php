@@ -88,7 +88,7 @@
                                 <span class="input-group-text"><i class="fas fa-envelope text-muted"></i></span>
                             </div>
                             <input type="email" name="email" class="form-control"
-                                   value="{{ old('email', 'admin@rankreport.pro') }}"
+                                   value="{{ old('email') }}"
                                    autofocus autocomplete="email" required>
                         </div>
                     </div>
