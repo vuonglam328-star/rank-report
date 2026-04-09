@@ -24,7 +24,23 @@
 /* ── Visibility score card ───────────────────────────────── */
 .visibility-card .inner h3 { font-size: 2.6rem; }
 
-/* ── Sticky modal thead ──────────────────────────────────── */
+/* ── Sortable table headers ──────────────────────────────── */
+th.sortable {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+th.sortable:hover { background: rgba(0,0,0,.04); }
+th.sortable .sort-icon {
+    display:inline-block; width:1em; text-align:center;
+    font-style:normal; font-size:.75em; margin-left:2px;
+    color:#adb5bd;
+}
+th.sortable .sort-icon::after        { content:'⇅'; }
+th.sortable.asc  .sort-icon::after   { content:'▲'; color:#007bff; }
+th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
+
+
 #allUrlsModal .modal-body { max-height: 65vh; overflow-y: auto; }
 #allUrlsModal thead th,
 #urlKeywordsModal thead th {
@@ -486,13 +502,13 @@
             <div class="card-body p-0">
                 <?php if(count($winners)): ?>
                 <div style="overflow-x:auto;">
-                <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
+                <table class="table table-sm table-hover mb-0 tbl-sort" style="font-size:.85rem;">
                     <thead class="thead-light">
                         <tr>
-                            <th>Keyword</th>
-                            <th class="text-center" style="width:80px;">Trước</th>
-                            <th class="text-center" style="width:80px;">Sau</th>
-                            <th class="text-center" style="width:90px;">Thay đổi</th>
+                            <th class="sortable" data-type="text">Keyword <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num" style="width:80px;">Trước <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num" style="width:80px;">Sau <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num" style="width:90px;">Thay đổi <span class="sort-icon"></span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -502,8 +518,8 @@
                                 <?php echo e($w['keyword'] ?? '—'); ?>
 
                             </td>
-                            <td class="text-center text-muted"><?php echo e($w['prev_position'] ?? '—'); ?></td>
-                            <td class="text-center">
+                            <td class="text-center text-muted" data-val="<?php echo e($w['previous_position'] ?? 9999); ?>"><?php echo e($w['previous_position'] ?? '—'); ?></td>
+                            <td class="text-center" data-val="<?php echo e($w['current_position'] ?? 9999); ?>">
                                 <?php
                                     $pos = $w['current_position'] ?? null;
                                     $badgeColor = $pos <= 3 ? 'success' : ($pos <= 10 ? 'info' : ($pos <= 20 ? 'primary' : ($pos <= 50 ? 'warning' : 'secondary')));
@@ -514,11 +530,11 @@
                                     <span class="text-muted">—</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-center">
-                                <?php if(isset($w['change']) && $w['change'] > 0): ?>
-                                    <span class="change-up">▲ +<?php echo e($w['change']); ?></span>
-                                <?php elseif(isset($w['change']) && $w['change'] < 0): ?>
-                                    <span class="change-down">▼ <?php echo e($w['change']); ?></span>
+                            <td class="text-center" data-val="<?php echo e($w['position_change'] ?? 0); ?>">
+                                <?php if(isset($w['position_change']) && $w['position_change'] > 0): ?>
+                                    <span class="change-up">▲ +<?php echo e($w['position_change']); ?></span>
+                                <?php elseif(isset($w['position_change']) && $w['position_change'] < 0): ?>
+                                    <span class="change-down">▼ <?php echo e($w['position_change']); ?></span>
                                 <?php else: ?>
                                     <span class="change-none">—</span>
                                 <?php endif; ?>
@@ -550,13 +566,13 @@
             <div class="card-body p-0">
                 <?php if(count($losers)): ?>
                 <div style="overflow-x:auto;">
-                <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
+                <table class="table table-sm table-hover mb-0 tbl-sort" style="font-size:.85rem;">
                     <thead class="thead-light">
                         <tr>
-                            <th>Keyword</th>
-                            <th class="text-center" style="width:80px;">Trước</th>
-                            <th class="text-center" style="width:80px;">Sau</th>
-                            <th class="text-center" style="width:90px;">Thay đổi</th>
+                            <th class="sortable" data-type="text">Keyword <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num" style="width:80px;">Trước <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num" style="width:80px;">Sau <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num" style="width:90px;">Thay đổi <span class="sort-icon"></span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -566,8 +582,8 @@
                                 <?php echo e($l['keyword'] ?? '—'); ?>
 
                             </td>
-                            <td class="text-center text-muted"><?php echo e($l['prev_position'] ?? '—'); ?></td>
-                            <td class="text-center">
+                            <td class="text-center text-muted" data-val="<?php echo e($l['previous_position'] ?? 9999); ?>"><?php echo e($l['previous_position'] ?? '—'); ?></td>
+                            <td class="text-center" data-val="<?php echo e($l['current_position'] ?? 9999); ?>">
                                 <?php
                                     $lpos = $l['current_position'] ?? null;
                                     $lBadge = $lpos <= 3 ? 'success' : ($lpos <= 10 ? 'info' : ($lpos <= 20 ? 'primary' : ($lpos <= 50 ? 'warning' : 'secondary')));
@@ -578,11 +594,11 @@
                                     <span class="text-muted">—</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-center">
-                                <?php if(isset($l['change']) && $l['change'] > 0): ?>
-                                    <span class="change-up">▲ +<?php echo e($l['change']); ?></span>
-                                <?php elseif(isset($l['change']) && $l['change'] < 0): ?>
-                                    <span class="change-down">▼ <?php echo e($l['change']); ?></span>
+                            <td class="text-center" data-val="<?php echo e($l['position_change'] ?? 0); ?>">
+                                <?php if(isset($l['position_change']) && $l['position_change'] > 0): ?>
+                                    <span class="change-up">▲ +<?php echo e($l['position_change']); ?></span>
+                                <?php elseif(isset($l['position_change']) && $l['position_change'] < 0): ?>
+                                    <span class="change-down">▼ <?php echo e($l['position_change']); ?></span>
                                 <?php else: ?>
                                     <span class="change-none">—</span>
                                 <?php endif; ?>
@@ -605,6 +621,74 @@
 </div>
 
 
+<?php if(!empty($topKeywords)): ?>
+<div class="card card-outline card-primary shadow-sm mb-4">
+    <div class="card-header d-flex align-items-center">
+        <h3 class="card-title"><i class="fas fa-key mr-2"></i>Top 10 Keywords</h3>
+        <div class="card-tools ml-auto">
+            <small class="text-muted">Click tiêu đề cột để sắp xếp</small>
+        </div>
+    </div>
+    <div class="card-body p-0" style="overflow-x:auto;">
+        <table class="table table-sm table-hover mb-0 tbl-sort" style="font-size:.85rem;">
+            <thead class="thead-light">
+                <tr>
+                    <th class="sortable" data-type="text" style="min-width:200px;">Keyword <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">Position <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">Thay đổi <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">Volume <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">Organic Traffic <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">KD <span class="sort-icon"></span></th>
+                    <th class="sortable" data-type="text" style="min-width:160px;">URL <span class="sort-icon"></span></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php $__currentLoopData = $topKeywords; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $kw): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <?php
+                    $pos     = $kw->current_position ?? null;
+                    $badge   = $pos <= 3 ? 'success' : ($pos <= 10 ? 'info' : ($pos <= 20 ? 'primary' : ($pos <= 50 ? 'warning' : 'secondary')));
+                    $chg     = $kw->position_change ?? 0;
+                    $urlPath = $kw->target_url ? preg_replace('#^https?://[^/]+#', '', $kw->target_url) ?: '/' : null;
+                    $kdVal   = ($kw->kd !== null && $kw->kd !== '') ? (int)$kw->kd : null;
+                ?>
+                <tr>
+                    <td class="text-truncate" style="max-width:220px;" title="<?php echo e($kw->keyword); ?>"><?php echo e($kw->keyword); ?></td>
+                    <td class="text-center" data-val="<?php echo e($pos ?? 9999); ?>">
+                        <?php if($pos): ?> <span class="badge badge-<?php echo e($badge); ?> px-2"><?php echo e($pos); ?></span>
+                        <?php else: ?> <span class="text-muted">—</span> <?php endif; ?>
+                    </td>
+                    <td class="text-center" data-val="<?php echo e($chg); ?>">
+                        <?php if($chg > 0): ?> <span class="change-up">▲ +<?php echo e($chg); ?></span>
+                        <?php elseif($chg < 0): ?> <span class="change-down">▼ <?php echo e($chg); ?></span>
+                        <?php else: ?> <span class="change-none">—</span> <?php endif; ?>
+                    </td>
+                    <td class="text-center text-muted" data-val="<?php echo e($kw->search_volume ?? 0); ?>">
+                        <?php echo e(($kw->search_volume ?? 0) > 0 ? number_format($kw->search_volume) : '—'); ?>
+
+                    </td>
+                    <td class="text-center text-muted" data-val="<?php echo e($kw->organic_traffic ?? 0); ?>">
+                        <?php echo e(($kw->organic_traffic ?? 0) > 0 ? number_format($kw->organic_traffic) : '—'); ?>
+
+                    </td>
+                    <td class="text-center" data-val="<?php echo e($kdVal ?? 999); ?>">
+                        <?php if($kdVal !== null): ?>
+                            <span class="badge badge-<?php echo e($kdVal <= 30 ? 'success' : ($kdVal <= 60 ? 'warning' : 'danger')); ?>"><?php echo e($kdVal); ?></span>
+                        <?php else: ?> <span class="text-muted">—</span> <?php endif; ?>
+                    </td>
+                    <td class="text-truncate" style="max-width:180px;" data-val="<?php echo e($urlPath ?? ''); ?>">
+                        <?php if($urlPath): ?>
+                            <a href="<?php echo e($kw->target_url); ?>" target="_blank" rel="noopener" class="text-info small" title="<?php echo e($kw->target_url); ?>"><?php echo e($urlPath); ?></a>
+                        <?php else: ?> <span class="text-muted">—</span> <?php endif; ?>
+                    </td>
+                </tr>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+<?php endif; ?>
+
+
 <?php if($competitorData): ?>
 <div class="row mb-4">
     <div class="col-12">
@@ -624,23 +708,23 @@
                 
                 <?php if(!empty($competitorData['domains'])): ?>
                 <div class="table-responsive mb-4">
-                    <table class="table table-sm table-bordered table-hover mb-0" style="font-size:.85rem;">
+                    <table class="table table-sm table-bordered table-hover mb-0 tbl-sort" style="font-size:.85rem;">
                         <thead class="thead-light">
                             <tr>
-                                <th>Domain</th>
-                                <th class="text-center">Total KW</th>
-                                <th class="text-center">Avg Pos</th>
-                                <th class="text-center">Top 3</th>
-                                <th class="text-center">Top 10</th>
-                                <th class="text-center">Top 20</th>
-                                <th class="text-center">Top 50</th>
-                                <th class="text-center">Visibility</th>
+                                <th class="sortable" data-type="text">Domain <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Total KW <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Avg Pos <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Top 3 <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Top 10 <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Top 20 <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Top 50 <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Visibility <span class="sort-icon"></span></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php $__currentLoopData = $competitorData['domains']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $domData): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <tr <?php echo e(isset($domData['is_main']) && $domData['is_main'] ? 'class=table-primary font-weight-bold' : ''); ?>>
-                                <td>
+                                <td data-val="<?php echo e($domData['domain'] ?? ''); ?>">
                                     <?php if(isset($domData['is_main']) && $domData['is_main']): ?>
                                         <i class="fas fa-home mr-1 text-primary"></i>
                                     <?php else: ?>
@@ -649,13 +733,13 @@
                                     <?php echo e($domData['domain'] ?? '—'); ?>
 
                                 </td>
-                                <td class="text-center"><?php echo e(number_format($domData['total_keywords'] ?? 0)); ?></td>
-                                <td class="text-center"><?php echo e($domData['avg_position'] ?? '—'); ?></td>
-                                <td class="text-center"><?php echo e(number_format($domData['top_3'] ?? 0)); ?></td>
-                                <td class="text-center"><?php echo e(number_format($domData['top_10'] ?? 0)); ?></td>
-                                <td class="text-center"><?php echo e(number_format($domData['top_20'] ?? 0)); ?></td>
-                                <td class="text-center"><?php echo e(number_format($domData['top_50'] ?? 0)); ?></td>
-                                <td class="text-center"><?php echo e(number_format($domData['visibility_score'] ?? 0, 2)); ?>%</td>
+                                <td class="text-center" data-val="<?php echo e($domData['total_keywords'] ?? 0); ?>"><?php echo e(number_format($domData['total_keywords'] ?? 0)); ?></td>
+                                <td class="text-center" data-val="<?php echo e($domData['avg_position'] ?? 9999); ?>"><?php echo e($domData['avg_position'] ?? '—'); ?></td>
+                                <td class="text-center" data-val="<?php echo e($domData['top_3'] ?? 0); ?>"><?php echo e(number_format($domData['top_3'] ?? 0)); ?></td>
+                                <td class="text-center" data-val="<?php echo e($domData['top_10'] ?? 0); ?>"><?php echo e(number_format($domData['top_10'] ?? 0)); ?></td>
+                                <td class="text-center" data-val="<?php echo e($domData['top_20'] ?? 0); ?>"><?php echo e(number_format($domData['top_20'] ?? 0)); ?></td>
+                                <td class="text-center" data-val="<?php echo e($domData['top_50'] ?? 0); ?>"><?php echo e(number_format($domData['top_50'] ?? 0)); ?></td>
+                                <td class="text-center" data-val="<?php echo e($domData['visibility_score'] ?? 0); ?>"><?php echo e(number_format($domData['visibility_score'] ?? 0, 2)); ?>%</td>
                             </tr>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </tbody>
@@ -707,15 +791,15 @@
             </div>
             <div class="card-body p-0">
                 <div style="overflow-x:auto;">
-                <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
+                <table class="table table-sm table-hover mb-0 tbl-sort" style="font-size:.85rem;">
                     <thead class="thead-light">
                         <tr>
-                            <th>#</th>
-                            <th>URL</th>
-                            <th class="text-center">Số Keyword</th>
-                            <th class="text-center">Vị trí tốt nhất</th>
-                            <th class="text-center">Avg Pos</th>
-                            <th class="text-center">Total Volume</th>
+                            <th class="sortable" data-type="num" style="width:40px;"># <span class="sort-icon"></span></th>
+                            <th class="sortable" data-type="text">URL <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num">Số Keyword <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num">Vị trí tốt nhất <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num">Avg Pos <span class="sort-icon"></span></th>
+                            <th class="sortable text-center" data-type="num">Total Volume <span class="sort-icon"></span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -729,14 +813,14 @@
                             $volume   = $page->total_volume ?? $page['total_volume'] ?? 0;
                         ?>
                         <tr>
-                            <td class="text-muted"><?php echo e($i + 1); ?></td>
-                            <td class="text-truncate" style="max-width:320px;" title="<?php echo e($pageUrl); ?>">
+                            <td class="text-muted" data-val="<?php echo e($i + 1); ?>"><?php echo e($i + 1); ?></td>
+                            <td class="text-truncate" style="max-width:320px;" title="<?php echo e($pageUrl); ?>" data-val="<?php echo e($pagePath); ?>">
                                 <a href="<?php echo e($pageUrl); ?>" target="_blank" rel="noopener" class="text-info">
                                     <?php echo e($pagePath); ?>
 
                                 </a>
                             </td>
-                            <td class="text-center">
+                            <td class="text-center" data-val="<?php echo e($kwCount); ?>">
                                 <button type="button"
                                         class="btn btn-xs btn-outline-primary btn-url-kw"
                                         data-snapshot="<?php echo e($selectedSnapshot->id); ?>"
@@ -745,7 +829,7 @@
 
                                 </button>
                             </td>
-                            <td class="text-center">
+                            <td class="text-center" data-val="<?php echo e($bestPos ?? 9999); ?>">
                                 <?php if($bestPos): ?>
                                     <?php $bBadge = $bestPos <= 3 ? 'success' : ($bestPos <= 10 ? 'info' : ($bestPos <= 20 ? 'primary' : ($bestPos <= 50 ? 'warning' : 'secondary'))); ?>
                                     <span class="badge badge-<?php echo e($bBadge); ?>"><?php echo e($bestPos); ?></span>
@@ -753,8 +837,8 @@
                                     <span class="text-muted">—</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-center text-muted"><?php echo e($avgPos ?? '—'); ?></td>
-                            <td class="text-center text-muted"><?php echo e(number_format($volume)); ?></td>
+                            <td class="text-center text-muted" data-val="<?php echo e($avgPos ?? 9999); ?>"><?php echo e($avgPos ?? '—'); ?></td>
+                            <td class="text-center text-muted" data-val="<?php echo e($volume); ?>"><?php echo e(number_format($volume)); ?></td>
                         </tr>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
@@ -997,6 +1081,49 @@
 
 
 <?php $__env->startPush('scripts'); ?>
+
+<script>
+(function () {
+    function getVal(td, type) {
+        const v = td.dataset.val;
+        if (v !== undefined) return type === 'num' ? parseFloat(v) : v.toLowerCase();
+        const t = td.textContent.replace(/[▲▼+,\s%]/g, '').trim();
+        return type === 'num' ? (parseFloat(t) || 0) : t.toLowerCase();
+    }
+
+    document.querySelectorAll('table.tbl-sort').forEach(table => {
+        const ths = table.querySelectorAll('thead th.sortable');
+        ths.forEach((th, colIdx) => {
+            th.addEventListener('click', () => {
+                const type    = th.dataset.type || 'text';
+                const wasAsc  = th.classList.contains('asc');
+                const sortDir = wasAsc ? 'desc' : 'asc';
+
+                // Reset tất cả headers
+                ths.forEach(h => h.classList.remove('asc', 'desc'));
+                th.classList.add(sortDir);
+
+                const tbody = table.querySelector('tbody');
+                const rows  = [...tbody.querySelectorAll('tr')];
+
+                rows.sort((a, b) => {
+                    const tdA = a.querySelectorAll('td')[colIdx];
+                    const tdB = b.querySelectorAll('td')[colIdx];
+                    if (!tdA || !tdB) return 0;
+                    const vA = getVal(tdA, type);
+                    const vB = getVal(tdB, type);
+                    if (vA < vB) return sortDir === 'asc' ? -1 : 1;
+                    if (vA > vB) return sortDir === 'asc' ? 1 : -1;
+                    return 0;
+                });
+
+                rows.forEach(r => tbody.appendChild(r));
+            });
+        });
+    });
+})();
+</script>
+
 <script>
 // ════════════════════════════════════════════════════════════════════════════════
 // Script 1 · Filter auto-submit logic

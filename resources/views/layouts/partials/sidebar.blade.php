@@ -89,6 +89,17 @@
                     </a>
                 </li>
 
+                {{-- Admin: User Management --}}
+                @if(auth()->user()->isAdmin())
+                <li class="nav-header text-uppercase" style="font-size:.65rem; letter-spacing:.08em;">Admin</li>
+                <li class="nav-item">
+                    <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-users-cog"></i>
+                        <p>Quản lý Users</p>
+                    </a>
+                </li>
+                @endif
+
             </ul>
         </nav>
     </div>

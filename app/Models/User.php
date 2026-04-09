@@ -14,6 +14,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     protected $hidden = [
@@ -28,4 +29,24 @@ class User extends Authenticatable
             'password'          => 'hashed',
         ];
     }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isEditor(): bool
+    {
+        return in_array($this->role, ['admin', 'editor']);
+    }
+
+    public function roleBadgeColor(): string
+    {
+        return match($this->role) {
+            'admin'  => 'danger',
+            'editor' => 'warning',
+            default  => 'secondary',
+        };
+    }
 }
+
