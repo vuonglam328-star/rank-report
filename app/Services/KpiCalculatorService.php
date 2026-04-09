@@ -112,7 +112,6 @@ class KpiCalculatorService
                 'kr.target_url',
             ])
             ->get()
-            ->map(fn($r) => (array) $r)
             ->toArray();
     }
 
@@ -137,7 +136,6 @@ class KpiCalculatorService
                 'kr.target_url',
             ])
             ->get()
-            ->map(fn($r) => (array) $r)
             ->toArray();
     }
 
@@ -212,7 +210,7 @@ class KpiCalculatorService
             ->orderByDesc('kr.position_change')
             ->limit($limit)
             ->select(['k.keyword','kr.current_position','kr.previous_position','kr.position_change','kr.search_volume','kr.target_url'])
-            ->get()->map(fn($r) => (array) $r)->toArray();
+            ->get()->toArray();
     }
 
     /**
@@ -229,7 +227,7 @@ class KpiCalculatorService
             ->orderBy('kr.position_change')
             ->limit($limit)
             ->select(['k.keyword','kr.current_position','kr.previous_position','kr.position_change','kr.search_volume','kr.target_url'])
-            ->get()->map(fn($r) => (array) $r)->toArray();
+            ->get()->toArray();
     }
 
     /**
@@ -265,7 +263,6 @@ class KpiCalculatorService
             ->limit($limit)
             ->select($select)
             ->get()
-            ->map(fn($r) => (array) $r)
             ->toArray();
     }
 

@@ -508,13 +508,13 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
                     <tbody>
                         @foreach($winners as $w)
                         <tr>
-                            <td class="text-truncate" style="max-width:200px;" title="{{ $w['keyword'] ?? '' }}">
-                                {{ $w['keyword'] ?? '—' }}
+                            <td class="text-truncate" style="max-width:200px;" title="{{ $w->keyword ?? '' }}">
+                                {{ $w->keyword ?? '—' }}
                             </td>
-                            <td class="text-center text-muted" data-val="{{ $w['previous_position'] ?? 9999 }}">{{ $w['previous_position'] ?? '—' }}</td>
-                            <td class="text-center" data-val="{{ $w['current_position'] ?? 9999 }}">
+                            <td class="text-center text-muted" data-val="{{ $w->previous_position ?? 9999 }}">{{ $w->previous_position ?? '—' }}</td>
+                            <td class="text-center" data-val="{{ $w->current_position ?? 9999 }}">
                                 @php
-                                    $pos = $w['current_position'] ?? null;
+                                    $pos = $w->current_position ?? null;
                                     $badgeColor = $pos <= 3 ? 'success' : ($pos <= 10 ? 'info' : ($pos <= 20 ? 'primary' : ($pos <= 50 ? 'warning' : 'secondary')));
                                 @endphp
                                 @if($pos)
@@ -523,11 +523,11 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
-                            <td class="text-center" data-val="{{ $w['position_change'] ?? 0 }}">
-                                @if(isset($w['position_change']) && $w['position_change'] > 0)
-                                    <span class="change-up">▲ +{{ $w['position_change'] }}</span>
-                                @elseif(isset($w['position_change']) && $w['position_change'] < 0)
-                                    <span class="change-down">▼ {{ $w['position_change'] }}</span>
+                            <td class="text-center" data-val="{{ $w->position_change ?? 0 }}">
+                                @if(($w->position_change ?? 0) > 0)
+                                    <span class="change-up">▲ +{{ $w->position_change }}</span>
+                                @elseif(($w->position_change ?? 0) < 0)
+                                    <span class="change-down">▼ {{ $w->position_change }}</span>
                                 @else
                                     <span class="change-none">—</span>
                                 @endif
@@ -571,13 +571,13 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
                     <tbody>
                         @foreach($losers as $l)
                         <tr>
-                            <td class="text-truncate" style="max-width:200px;" title="{{ $l['keyword'] ?? '' }}">
-                                {{ $l['keyword'] ?? '—' }}
+                            <td class="text-truncate" style="max-width:200px;" title="{{ $l->keyword ?? '' }}">
+                                {{ $l->keyword ?? '—' }}
                             </td>
-                            <td class="text-center text-muted" data-val="{{ $l['previous_position'] ?? 9999 }}">{{ $l['previous_position'] ?? '—' }}</td>
-                            <td class="text-center" data-val="{{ $l['current_position'] ?? 9999 }}">
+                            <td class="text-center text-muted" data-val="{{ $l->previous_position ?? 9999 }}">{{ $l->previous_position ?? '—' }}</td>
+                            <td class="text-center" data-val="{{ $l->current_position ?? 9999 }}">
                                 @php
-                                    $lpos = $l['current_position'] ?? null;
+                                    $lpos = $l->current_position ?? null;
                                     $lBadge = $lpos <= 3 ? 'success' : ($lpos <= 10 ? 'info' : ($lpos <= 20 ? 'primary' : ($lpos <= 50 ? 'warning' : 'secondary')));
                                 @endphp
                                 @if($lpos)
@@ -586,11 +586,11 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
-                            <td class="text-center" data-val="{{ $l['position_change'] ?? 0 }}">
-                                @if(isset($l['position_change']) && $l['position_change'] > 0)
-                                    <span class="change-up">▲ +{{ $l['position_change'] }}</span>
-                                @elseif(isset($l['position_change']) && $l['position_change'] < 0)
-                                    <span class="change-down">▼ {{ $l['position_change'] }}</span>
+                            <td class="text-center" data-val="{{ $l->position_change ?? 0 }}">
+                                @if(($l->position_change ?? 0) > 0)
+                                    <span class="change-up">▲ +{{ $l->position_change }}</span>
+                                @elseif(($l->position_change ?? 0) < 0)
+                                    <span class="change-down">▼ {{ $l->position_change }}</span>
                                 @else
                                     <span class="change-none">—</span>
                                 @endif
