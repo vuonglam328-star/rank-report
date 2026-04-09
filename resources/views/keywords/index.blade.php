@@ -109,9 +109,11 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
             $sortCols = [
                 'keyword'  => ['key' => 'keyword',  'label' => 'Keyword'],
                 'position' => ['key' => 'position', 'label' => 'Vị trí'],
+                'best'     => ['key' => 'best',     'label' => 'Tốt nhất'],
                 'change'   => ['key' => 'change',   'label' => 'Thay đổi'],
                 'volume'   => ['key' => 'volume',   'label' => 'Volume'],
             ];
+            $colWidths = ['position' => '80px', 'best' => '80px', 'change' => '90px', 'volume' => '90px'];
         @endphp
         <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
             <thead class="thead-light">
@@ -124,7 +126,7 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
                         $iconColor= $isActive ? '#007bff' : '#adb5bd';
                         $href = request()->fullUrlWithQuery(['sort' => $col['key'], 'direction' => $nextDir, 'page' => 1]);
                     @endphp
-                    <th style="cursor:pointer;user-select:none;white-space:nowrap;{{ $col['key'] !== 'keyword' ? 'width:' . (['position'=>'80px','change'=>'90px','volume'=>'90px'][$col['key']] ?? 'auto') . ';text-align:center;' : '' }}">
+                    <th style="cursor:pointer;user-select:none;white-space:nowrap;{{ $col['key'] !== 'keyword' ? 'width:' . ($colWidths[$col['key']] ?? 'auto') . ';text-align:center;' : '' }}">
                         <a href="{{ $href }}" class="text-dark text-decoration-none">
                             {{ $col['label'] }}
                             <span style="display:inline-block;width:1em;text-align:center;font-size:.75em;margin-left:2px;color:{{ $iconColor }}">{{ $icon }}</span>
@@ -153,6 +155,20 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
                             <span class="badge badge-{{ $badge }} px-2">{{ $row->current_position }}</span>
                         @else
                             <span class="badge badge-light text-muted">—</span>
+                        @endif
+                    </td>
+                    <td class="text-center" data-val="{{ $row->best_position ?? 9999 }}">
+                        @if($row->best_position)
+                            @php
+                                $bestBadge = $row->best_position <= 3 ? 'success' : ($row->best_position <= 10 ? 'info' : ($row->best_position <= 20 ? 'primary' : ($row->best_position <= 50 ? 'warning' : 'secondary')));
+                                $isCurrent = $row->best_position == $row->current_position;
+                            @endphp
+                            <span class="badge badge-{{ $bestBadge }} px-2">{{ $row->best_position }}</span>
+                            @if($isCurrent)
+                                <i class="fas fa-star fa-xs text-warning ml-1" title="Đang ở vị trí tốt nhất"></i>
+                            @endif
+                        @else
+                            <span class="text-muted">—</span>
                         @endif
                     </td>
                     <td class="text-center" data-val="{{ $row->position_change ?? 0 }}">
@@ -194,7 +210,7 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-4">
+                    <td colspan="8" class="text-center text-muted py-4">
                         <i class="fas fa-search fa-2x mb-2 d-block opacity-25"></i>
                         Không có keyword nào khớp với bộ lọc.
                     </td>

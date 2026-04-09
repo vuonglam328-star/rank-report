@@ -21,7 +21,7 @@ class KeywordController extends Controller
             'position_group' => 'nullable|in:top_3,top_10,top_20,top_50,top_100,outside',
             'brand'        => 'nullable|in:all,branded,non_branded',
             'search'       => 'nullable|string|max:255',
-            'sort'         => 'nullable|in:position,change,volume,keyword',
+            'sort'         => 'nullable|in:position,change,volume,keyword,best',
             'direction'    => 'nullable|in:asc,desc',
         ]);
 
@@ -47,8 +47,20 @@ class KeywordController extends Controller
         }
 
         if ($selectedSnapshot) {
+            // Sub-query: best position per keyword across ALL snapshots of this project
+            $allSnapshotIds = $selectedProject->snapshots()
+                ->where('status', 'completed')
+                ->pluck('id');
+
+            $bestPositionSub = DB::table('keyword_rankings')
+                ->whereIn('snapshot_id', $allSnapshotIds)
+                ->whereNotNull('current_position')
+                ->groupBy('keyword_id')
+                ->selectRaw('keyword_id, MIN(current_position) as best_position');
+
             $query = DB::table('keyword_rankings as kr')
                 ->join('keywords as k', 'kr.keyword_id', '=', 'k.id')
+                ->joinSub($bestPositionSub, 'bp', 'bp.keyword_id', '=', 'kr.keyword_id')
                 ->where('kr.snapshot_id', $selectedSnapshot->id)
                 ->select([
                     'k.id as keyword_id',
@@ -61,6 +73,7 @@ class KeywordController extends Controller
                     'kr.search_volume',
                     'kr.target_url',
                     'kr.visibility_points',
+                    'bp.best_position',
                 ]);
 
             // Filter by position group
@@ -88,12 +101,12 @@ class KeywordController extends Controller
                 'change'   => 'kr.position_change',
                 'volume'   => 'kr.search_volume',
                 'keyword'  => 'k.keyword',
+                'best'     => 'bp.best_position',
             ];
             $sortCol = $sortMap[$request->input('sort', 'position')] ?? 'kr.current_position';
             $sortDir = $request->input('direction', 'asc');
 
             if ($sortCol === 'kr.position_change') {
-                // Show most improved first by default
                 $query->orderByDesc('kr.position_change');
             } else {
                 $query->orderBy($sortCol, $sortDir);
