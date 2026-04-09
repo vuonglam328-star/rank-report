@@ -100,23 +100,39 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
             Keywords — {{ $selectedProject->name }}
             <span class="badge badge-secondary ml-2">{{ $keywords->total() }} kết quả</span>
         </h3>
-        <small class="text-muted">
-            Snapshot: {{ $selectedSnapshot->report_date->format('d/m/Y') }}
-            @if($keywords->hasPages())
-                &nbsp;·&nbsp; <span class="text-warning">Sort áp dụng trong trang hiện tại</span>
-            @endif
-        </small>
+        <small class="text-muted">Snapshot: {{ $selectedSnapshot->report_date->format('d/m/Y') }}</small>
     </div>
     <div class="card-body p-0" style="overflow-x:auto;">
-        <table class="table table-sm table-hover mb-0 tbl-sort" style="font-size:.85rem;">
+        @php
+            $curSort = request('sort', 'position');
+            $curDir  = request('direction', 'asc');
+            $sortCols = [
+                'keyword'  => ['key' => 'keyword',  'label' => 'Keyword'],
+                'position' => ['key' => 'position', 'label' => 'Vị trí'],
+                'change'   => ['key' => 'change',   'label' => 'Thay đổi'],
+                'volume'   => ['key' => 'volume',   'label' => 'Volume'],
+            ];
+        @endphp
+        <table class="table table-sm table-hover mb-0" style="font-size:.85rem;">
             <thead class="thead-light">
                 <tr>
-                    <th class="sortable" data-type="text">Keyword <span class="sort-icon"></span></th>
-                    <th class="sortable text-center" data-type="num" style="width:80px;">Vị trí <span class="sort-icon"></span></th>
-                    <th class="sortable text-center" data-type="num" style="width:90px;">Thay đổi <span class="sort-icon"></span></th>
-                    <th class="sortable text-center" data-type="num" style="width:90px;">Volume <span class="sort-icon"></span></th>
-                    <th class="sortable" data-type="text">Landing Page <span class="sort-icon"></span></th>
-                    <th class="sortable text-center" data-type="text" style="width:70px;">Brand <span class="sort-icon"></span></th>
+                    @foreach($sortCols as $col)
+                    @php
+                        $isActive = $curSort === $col['key'];
+                        $nextDir  = ($isActive && $curDir === 'asc') ? 'desc' : 'asc';
+                        $icon     = $isActive ? ($curDir === 'asc' ? '▲' : '▼') : '⇅';
+                        $iconColor= $isActive ? '#007bff' : '#adb5bd';
+                        $href = request()->fullUrlWithQuery(['sort' => $col['key'], 'direction' => $nextDir, 'page' => 1]);
+                    @endphp
+                    <th style="cursor:pointer;user-select:none;white-space:nowrap;{{ $col['key'] !== 'keyword' ? 'width:' . (['position'=>'80px','change'=>'90px','volume'=>'90px'][$col['key']] ?? 'auto') . ';text-align:center;' : '' }}">
+                        <a href="{{ $href }}" class="text-dark text-decoration-none">
+                            {{ $col['label'] }}
+                            <span style="display:inline-block;width:1em;text-align:center;font-size:.75em;margin-left:2px;color:{{ $iconColor }}">{{ $icon }}</span>
+                        </a>
+                    </th>
+                    @endforeach
+                    <th class="text-muted" style="width:90px;">Landing Page</th>
+                    <th class="text-center" style="width:70px;">Brand</th>
                     <th class="text-center" style="width:70px;">Timeline</th>
                 </tr>
             </thead>
@@ -216,32 +232,6 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
 
 @push('scripts')
 <script>
-// ── Table Sort ────────────────────────────────────────────────────────────────
-(function () {
-    function getVal(td, type) {
-        const v = td.dataset.val;
-        if (v !== undefined) return type === 'num' ? parseFloat(v) : v.toLowerCase();
-        const t = td.textContent.replace(/[▲▼+,\s%]/g, '').trim();
-        return type === 'num' ? (parseFloat(t) || 0) : t.toLowerCase();
-    }
-    document.querySelectorAll('table.tbl-sort').forEach(table => {
-        table.querySelectorAll('thead th.sortable').forEach((th, colIdx) => {
-            th.addEventListener('click', () => {
-                const type   = th.dataset.type || 'text';
-                const dir    = th.classList.contains('asc') ? 'desc' : 'asc';
-                table.querySelectorAll('thead th.sortable').forEach(h => h.classList.remove('asc','desc'));
-                th.classList.add(dir);
-                const tbody = table.querySelector('tbody');
-                [...tbody.querySelectorAll('tr')].sort((a, b) => {
-                    const vA = getVal(a.querySelectorAll('td')[colIdx], type);
-                    const vB = getVal(b.querySelectorAll('td')[colIdx], type);
-                    return (vA < vB ? -1 : vA > vB ? 1 : 0) * (dir === 'asc' ? 1 : -1);
-                }).forEach(r => tbody.appendChild(r));
-            });
-        });
-    });
-})();
-
 // ── Auto-submit khi đổi Project: load snapshots → submit ─────────────────────
 document.getElementById('projSelect').addEventListener('change', function () {
     const projectId = this.value;
