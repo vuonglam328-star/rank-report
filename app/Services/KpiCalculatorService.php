@@ -112,6 +112,7 @@ class KpiCalculatorService
                 'kr.target_url',
             ])
             ->get()
+            ->map(fn($r) => (array) $r)
             ->toArray();
     }
 
@@ -136,6 +137,7 @@ class KpiCalculatorService
                 'kr.target_url',
             ])
             ->get()
+            ->map(fn($r) => (array) $r)
             ->toArray();
     }
 
@@ -210,7 +212,7 @@ class KpiCalculatorService
             ->orderByDesc('kr.position_change')
             ->limit($limit)
             ->select(['k.keyword','kr.current_position','kr.previous_position','kr.position_change','kr.search_volume','kr.target_url'])
-            ->get()->toArray();
+            ->get()->map(fn($r) => (array) $r)->toArray();
     }
 
     /**
@@ -227,7 +229,7 @@ class KpiCalculatorService
             ->orderBy('kr.position_change')
             ->limit($limit)
             ->select(['k.keyword','kr.current_position','kr.previous_position','kr.position_change','kr.search_volume','kr.target_url'])
-            ->get()->toArray();
+            ->get()->map(fn($r) => (array) $r)->toArray();
     }
 
     /**
@@ -235,10 +237,25 @@ class KpiCalculatorService
      */
     public function getTopKeywords(Snapshot $snapshot, int $limit = 10, string $sortBy = 'current_position', string $sortDir = 'asc'): array
     {
-        $allowedSort = ['current_position', 'search_volume', 'organic_traffic', 'kd'];
+        $hasNewCols  = \Schema::hasColumns('keyword_rankings', ['kd', 'organic_traffic']);
+        $allowedSort = $hasNewCols
+            ? ['current_position', 'search_volume', 'organic_traffic', 'kd']
+            : ['current_position', 'search_volume'];
         $allowedDir  = ['asc', 'desc'];
         $sortBy  = in_array($sortBy, $allowedSort) ? $sortBy : 'current_position';
         $sortDir = in_array($sortDir, $allowedDir) ? $sortDir : 'asc';
+
+        $select = [
+            'k.keyword',
+            'kr.current_position',
+            'kr.position_change',
+            'kr.search_volume',
+            'kr.target_url',
+        ];
+        if ($hasNewCols) {
+            $select[] = 'kr.organic_traffic';
+            $select[] = 'kr.kd';
+        }
 
         return DB::table('keyword_rankings as kr')
             ->join('keywords as k', 'kr.keyword_id', '=', 'k.id')
@@ -246,16 +263,9 @@ class KpiCalculatorService
             ->whereNotNull('kr.current_position')
             ->orderBy("kr.{$sortBy}", $sortDir)
             ->limit($limit)
-            ->select([
-                'k.keyword',
-                'kr.current_position',
-                'kr.position_change',
-                'kr.search_volume',
-                'kr.organic_traffic',
-                'kr.kd',
-                'kr.target_url',
-            ])
+            ->select($select)
             ->get()
+            ->map(fn($r) => (array) $r)
             ->toArray();
     }
 
@@ -271,6 +281,7 @@ class KpiCalculatorService
             ->limit($limit)
             ->selectRaw('target_url, COUNT(*) as kw_count, MIN(current_position) as best_pos, AVG(current_position) as avg_pos, SUM(search_volume) as total_volume')
             ->get()
+            ->map(fn($r) => (array) $r)
             ->toArray();
     }
 
