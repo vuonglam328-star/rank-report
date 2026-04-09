@@ -237,7 +237,8 @@ class CompetitorAnalysisService
             $visibilityScore= 0;
             $kwCount        = count($rankings);
             $overlapWithMain= 0;
-            $winCount       = 0; // keywords where this project ranks higher than main
+            $compWins       = 0; // keywords where competitor ranks higher than main
+            $mainWins       = 0; // keywords where main ranks higher than competitor
 
             $mainRankings   = $rankingsByProject[$mainProjectId] ?? [];
 
@@ -250,7 +251,9 @@ class CompetitorAnalysisService
                         $mainPos = $mainRankings[$normKw]->current_position ?? 999;
                         $compPos = $r->current_position ?? 999;
                         if ($compPos < $mainPos) {
-                            $winCount++;
+                            $compWins++;
+                        } elseif ($mainPos < $compPos) {
+                            $mainWins++;
                         }
                     }
                 }
@@ -265,7 +268,8 @@ class CompetitorAnalysisService
                 'visibility_score' => $visibilityScore,
                 'share_of_voice'   => 0, // filled later
                 'overlap_with_main'=> $overlapWithMain,
-                'wins_vs_main'     => $projectId !== $mainProjectId ? $winCount : 0,
+                'wins_vs_main'     => $projectId !== $mainProjectId ? $compWins : 0,
+                'main_wins'        => $projectId !== $mainProjectId ? $mainWins : 0,
                 'snapshot_date'    => $snap->report_date->format('d/m/Y'),
             ];
         }
@@ -348,8 +352,10 @@ class CompetitorAnalysisService
             usort($overlap, fn($a, $b) => ($a['winner'] === 'competitor' ? 0 : 1) - ($b['winner'] === 'competitor' ? 0 : 1));
 
             $details[$projectId] = [
-                'domain'    => $project?->domain_clean ?? 'Unknown',
-                'keywords'  => array_slice($overlap, 0, 50), // limit for display
+                'domain'      => $project?->domain_clean ?? 'Unknown',
+                'total_count' => count($overlap),
+                'keywords'    => array_slice($overlap, 0, 50),
+                'all_keywords'=> $overlap,
             ];
         }
 

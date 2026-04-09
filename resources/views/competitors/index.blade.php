@@ -107,7 +107,7 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
                     <th class="sortable text-center" data-type="num">Visibility Score <span class="sort-icon"></span></th>
                     <th class="text-center">Share of Voice</th>
                     <th class="sortable text-center" data-type="num">Overlap <span class="sort-icon"></span></th>
-                    <th class="sortable text-center" data-type="num">Wins vs Main <span class="sort-icon"></span></th>
+                    <th class="sortable text-center" data-type="num">Win vs Main <span class="sort-icon"></span></th>
                     <th class="sortable text-center" data-type="text">Snapshot <span class="sort-icon"></span></th>
                 </tr>
             </thead>
@@ -130,11 +130,11 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
                         </div>
                     </td>
                     <td class="text-center" data-val="{{ $m['overlap_with_main'] }}">{{ number_format($m['overlap_with_main']) }}</td>
-                    <td class="text-center" data-val="{{ $m['is_main'] ? -1 : $m['wins_vs_main'] }}">
+                    <td class="text-center" data-val="{{ $m['is_main'] ? -1 : $m['main_wins'] }}">
                         @if(!$m['is_main'])
-                            <span class="{{ $m['wins_vs_main'] > 0 ? 'text-danger' : 'text-muted' }}">
-                                {{ number_format($m['wins_vs_main']) }}
-                            </span>
+                            <span class="text-success font-weight-bold">+{{ $m['main_wins'] }}</span>
+                            <span class="text-muted">/</span>
+                            <span class="text-danger font-weight-bold">-{{ $m['wins_vs_main'] }}</span>
                         @else —@endif
                     </td>
                     <td class="text-center text-muted small" data-val="{{ $m['snapshot_date'] }}">{{ $m['snapshot_date'] }}</td>
@@ -180,7 +180,13 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
     <div class="card-body">
         @foreach($analysis['overlap_details'] as $projectId => $detail)
         <h5>Main vs <strong>{{ $detail['domain'] }}</strong>
-            <span class="badge badge-secondary ml-1">{{ count($detail['keywords']) }} keywords overlap</span>
+            <span class="badge badge-secondary ml-1">{{ $detail['total_count'] }} keywords overlap</span>
+            @if($detail['total_count'] > 50)
+            <button type="button" class="btn btn-xs btn-outline-secondary ml-2"
+                    data-toggle="modal" data-target="#overlapModal{{ $projectId }}">
+                <i class="fas fa-expand-alt mr-1"></i>Xem tất cả {{ $detail['total_count'] }} keywords
+            </button>
+            @endif
         </h5>
         <div style="max-height:250px; overflow-y:auto; margin-bottom:20px;">
         <table class="table table-sm table-bordered mb-0 tbl-sort" style="font-size:.82rem;">
@@ -208,6 +214,54 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
             </tbody>
         </table>
         </div>
+
+        {{-- Modal: tất cả keywords overlap --}}
+        @if($detail['total_count'] > 50)
+        <div class="modal fade" id="overlapModal{{ $projectId }}" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            Tất cả keyword overlap — Main vs <strong>{{ $detail['domain'] }}</strong>
+                            <span class="badge badge-secondary ml-1">{{ $detail['total_count'] }} keywords</span>
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body p-0" style="max-height:70vh; overflow-y:auto;">
+                        <table class="table table-sm table-bordered mb-0" style="font-size:.82rem;">
+                            <thead class="thead-light" style="position:sticky;top:0;z-index:1;">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Keyword</th>
+                                    <th class="text-center" style="width:80px;">Main</th>
+                                    <th class="text-center" style="width:80px;">{{ $detail['domain'] }}</th>
+                                    <th class="text-center" style="width:100px;">Winner</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($detail['all_keywords'] as $i => $kw)
+                                <tr class="{{ $kw['winner'] === 'competitor' ? 'table-danger' : 'table-success' }}">
+                                    <td class="text-muted small">{{ $i + 1 }}</td>
+                                    <td>{{ $kw['keyword'] }}</td>
+                                    <td class="text-center">{{ $kw['main_pos'] ?? '—' }}</td>
+                                    <td class="text-center">{{ $kw['comp_pos'] ?? '—' }}</td>
+                                    <td class="text-center">
+                                        <span class="badge badge-{{ $kw['winner'] === 'main' ? 'success' : 'danger' }}">
+                                            {{ $kw['winner'] === 'main' ? 'Main ✓' : $detail['domain'] }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
         @endforeach
     </div>
 </div>
