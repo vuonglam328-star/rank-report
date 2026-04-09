@@ -620,7 +620,10 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
     <div class="card-header d-flex align-items-center">
         <h3 class="card-title"><i class="fas fa-key mr-2"></i>Top 10 Keywords</h3>
         <div class="card-tools ml-auto">
-            <small class="text-muted">Click tiêu đề cột để sắp xếp</small>
+            <a href="{{ route('keywords.index', ['project_id' => $selectedProject->id, 'snapshot_id' => $selectedSnapshot->id]) }}"
+               class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-list mr-1"></i>Xem tất cả keywords
+            </a>
         </div>
     </div>
     <div class="card-body p-0" style="overflow-x:auto;">
@@ -700,39 +703,45 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
             <div class="card-body">
 
                 {{-- Domain Metrics Table --}}
-                @if(!empty($competitorData['domains']))
+                @if(!empty($competitorData['domain_metrics']))
                 <div class="table-responsive mb-4">
                     <table class="table table-sm table-bordered table-hover mb-0 tbl-sort" style="font-size:.85rem;">
                         <thead class="thead-light">
                             <tr>
                                 <th class="sortable" data-type="text">Domain <span class="sort-icon"></span></th>
                                 <th class="sortable text-center" data-type="num">Total KW <span class="sort-icon"></span></th>
-                                <th class="sortable text-center" data-type="num">Avg Pos <span class="sort-icon"></span></th>
-                                <th class="sortable text-center" data-type="num">Top 3 <span class="sort-icon"></span></th>
-                                <th class="sortable text-center" data-type="num">Top 10 <span class="sort-icon"></span></th>
-                                <th class="sortable text-center" data-type="num">Top 20 <span class="sort-icon"></span></th>
-                                <th class="sortable text-center" data-type="num">Top 50 <span class="sort-icon"></span></th>
                                 <th class="sortable text-center" data-type="num">Visibility <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Share of Voice <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Overlap <span class="sort-icon"></span></th>
+                                <th class="sortable text-center" data-type="num">Win vs Main <span class="sort-icon"></span></th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($competitorData['domains'] as $domData)
-                            <tr {{ isset($domData['is_main']) && $domData['is_main'] ? 'class=table-primary font-weight-bold' : '' }}>
-                                <td data-val="{{ $domData['domain'] ?? '' }}">
-                                    @if(isset($domData['is_main']) && $domData['is_main'])
-                                        <i class="fas fa-home mr-1 text-primary"></i>
-                                    @else
-                                        <i class="fas fa-flag mr-1 text-warning"></i>
-                                    @endif
-                                    {{ $domData['domain'] ?? '—' }}
+                            @foreach($competitorData['domain_metrics'] as $m)
+                            <tr class="{{ $m['is_main'] ? 'table-primary font-weight-bold' : '' }}">
+                                <td data-val="{{ $m['domain'] }}">
+                                    @if($m['is_main'])<i class="fas fa-home mr-1 text-primary"></i>@else<i class="fas fa-flag mr-1 text-warning"></i>@endif
+                                    {{ $m['domain'] }}
+                                    @if($m['is_main'])<span class="badge badge-primary ml-1">Main</span>@endif
                                 </td>
-                                <td class="text-center" data-val="{{ $domData['total_keywords'] ?? 0 }}">{{ number_format($domData['total_keywords'] ?? 0) }}</td>
-                                <td class="text-center" data-val="{{ $domData['avg_position'] ?? 9999 }}">{{ $domData['avg_position'] ?? '—' }}</td>
-                                <td class="text-center" data-val="{{ $domData['top_3'] ?? 0 }}">{{ number_format($domData['top_3'] ?? 0) }}</td>
-                                <td class="text-center" data-val="{{ $domData['top_10'] ?? 0 }}">{{ number_format($domData['top_10'] ?? 0) }}</td>
-                                <td class="text-center" data-val="{{ $domData['top_20'] ?? 0 }}">{{ number_format($domData['top_20'] ?? 0) }}</td>
-                                <td class="text-center" data-val="{{ $domData['top_50'] ?? 0 }}">{{ number_format($domData['top_50'] ?? 0) }}</td>
-                                <td class="text-center" data-val="{{ $domData['visibility_score'] ?? 0 }}">{{ number_format($domData['visibility_score'] ?? 0, 2) }}%</td>
+                                <td class="text-center" data-val="{{ $m['total_keywords'] }}">{{ number_format($m['total_keywords']) }}</td>
+                                <td class="text-center" data-val="{{ $m['visibility_score'] }}">{{ number_format($m['visibility_score']) }}</td>
+                                <td class="text-center" data-val="{{ $m['share_of_voice'] }}">
+                                    <div class="progress" style="height:16px;">
+                                        <div class="progress-bar bg-{{ $m['is_main'] ? 'primary' : 'warning' }}"
+                                             style="width:{{ min($m['share_of_voice'], 100) }}%">
+                                            {{ $m['share_of_voice'] }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center" data-val="{{ $m['overlap_with_main'] }}">{{ number_format($m['overlap_with_main']) }}</td>
+                                <td class="text-center" data-val="{{ $m['is_main'] ? -1 : $m['main_wins'] }}">
+                                    @if(!$m['is_main'])
+                                        <span class="text-success font-weight-bold">+{{ $m['main_wins'] }}</span>
+                                        <span class="text-muted">/</span>
+                                        <span class="text-danger font-weight-bold">-{{ $m['wins_vs_main'] }}</span>
+                                    @else —@endif
+                                </td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -1230,20 +1239,7 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
 
     new Chart(ctx, {
         type: 'line',
-        data: {
-            labels: @json($timelineData['labels']),
-            datasets: [{
-                label: 'Avg Position',
-                data: @json($timelineData['values'] ?? $timelineData['data'] ?? []),
-                borderColor: '#4e73df',
-                backgroundColor: 'rgba(78,115,223,0.08)',
-                borderWidth: 2,
-                pointRadius: 4,
-                pointBackgroundColor: '#4e73df',
-                tension: 0.35,
-                fill: true,
-            }]
-        },
+        data: @json($timelineData['avgPosition']),
         options: {
             responsive: true,
             maintainAspectRatio: true,
@@ -1272,26 +1268,22 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
 </script>
 @endif
 
-@if(isset($kpis['position_distribution']) && !empty($kpis['position_distribution']))
+@if(isset($kpis['position_distribution']) && !empty($kpis['position_distribution']['data']))
 <script>
 (function () {
     const ctx = document.getElementById('distChart');
     if (!ctx) return;
 
-    const dist   = @json($kpis['position_distribution']);
-    const labels = Object.keys(dist);
-    const values = Object.values(dist);
-
-    const colors = ['#28a745','#17a2b8','#4e73df','#6f42c1','#ffc107','#6c757d','#343a40'];
+    const dist = @json($kpis['position_distribution']);
 
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: dist.labels,
             datasets: [{
                 label: 'Số keyword',
-                data: values,
-                backgroundColor: colors.slice(0, labels.length),
+                data: dist.data,
+                backgroundColor: dist.colors,
                 borderRadius: 4,
             }]
         },
@@ -1322,7 +1314,7 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
 @if($competitorData)
 <script>
 (function () {
-    const domains = @json($competitorData['domains'] ?? []);
+    const domains = @json($competitorData['domain_metrics'] ?? []);
 
     // ── Visibility Bar Chart ──────────────────────────────────────────
     const ctxVis = document.getElementById('compVisChart');
@@ -1361,16 +1353,12 @@ th.sortable.desc .sort-icon::after   { content:'▼'; color:#007bff; }
     // ── SoV Doughnut Chart ────────────────────────────────────────────
     const ctxSov = document.getElementById('compSovChart');
     if (ctxSov && domains.length) {
-        const sovData = domains.map(d => parseInt(d.top_10 ?? 0));
-        const total   = sovData.reduce((a, b) => a + b, 0);
-        const sovPct  = total > 0 ? sovData.map(v => parseFloat((v / total * 100).toFixed(1))) : sovData;
-
         new Chart(ctxSov, {
             type: 'doughnut',
             data: {
-                labels: domains.map(d => d.domain ?? d.name ?? ''),
+                labels: domains.map(d => d.domain ?? ''),
                 datasets: [{
-                    data: sovPct,
+                    data: domains.map(d => parseFloat(d.share_of_voice ?? 0)),
                     backgroundColor: ['#4e73df','#e74a3b','#f6c23e','#1cc88a','#36b9cc','#858796'],
                     borderWidth: 2,
                 }]
